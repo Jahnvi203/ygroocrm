@@ -12,6 +12,7 @@ import os
 import time
 import pytz
 from requests.utils import requote_uri
+import traceback
 
 app = Flask(__name__)
 app.secret_key = os.getenv("app_secret_key")
@@ -140,7 +141,7 @@ def index():
                 due_week_html = "None"
             return render_template("index.html", pending_html = pending_html, due_today_html = due_today_html, due_week_html = due_week_html)
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return render_template("error.html", error = e)
 
 @app.route('/companies')
@@ -318,7 +319,7 @@ def companies():
                 table_html = "None"
             return render_template("companies.html", table_html = table_html)
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return render_template("error.html", error = e)
 
 @app.route('/contacts')
@@ -360,7 +361,7 @@ def contacts():
                 table_html = "None"
             return render_template("contacts.html", table_html = table_html)
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return render_template("error.html", error = e)
 
 @app.route('/process-status-change', methods = ['POST'])
@@ -371,7 +372,7 @@ def process_status_change():
         companies_col.update_one({'Company ID': company_id}, {"$set": {'Status': new_status}})
         return "Status Change Processed Successfully"
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 @app.route('/company/<id>')
@@ -636,7 +637,7 @@ def view_company(id):
                 reminders_table_html = "None"
             return render_template("view_company.html", id = id, name = company_row['Company'], state = company_row['State'], sector = company_row['Sector'], employees = company_row['Employees'], status = status, contacts_html = contacts_table_html, meetings_html = meetings_table_html, reminders_html = reminders_table_html, company_options_html = company_options_html, company_contact_options_html = company_contact_options_html)
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return render_template("error.html", error = e)
 
 @app.route('/process-company-change', methods = ['POST'])
@@ -659,7 +660,7 @@ def process_company_change():
             requests.patch(f"https://api.helpscout.net/v2/customers/{contact['HelpScout ID']}", headers = headers, json = body)
         return "Company Change Processed Successfully"
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 @app.route('/process-contact-change', methods = ['POST'])
@@ -708,7 +709,7 @@ def process_contact_change():
         })
         return "Contact Change Processed Successfully"
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 @app.route('/contact/<id>/communication')
@@ -809,7 +810,7 @@ def get_contact_comms(id):
                 phone_comms_html = "None"
             return render_template("view_contact_communication.html", id = id, name = contact['Name'], designation = contact['Designation'], email = contact['Email'], mobile = contact['Mobile'], company = contact['Company'], active_response_html = active_response_html, closed_response_html = closed_response_html, phone_comms_html = phone_comms_html)
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return render_template("error.html", error = e)
 
 def get_bearer_token():
@@ -854,7 +855,7 @@ def get_bearer_token():
         else:
             return bearer_token
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 def get_comms(mailbox, type, sort_by, sort_order, status, email):
@@ -869,7 +870,7 @@ def get_comms(mailbox, type, sort_by, sort_order, status, email):
         data = response.json()
         return data
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 @app.route('/add-company', methods = ['POST'])
@@ -899,7 +900,7 @@ def add_company():
             })
             return "Company Added Successfully"
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 @app.route('/add-contact', methods = ['POST'])
@@ -933,7 +934,7 @@ def add_contact():
             })
             return "Contact Added Successfully"
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 @app.route('/add-phone-comm/<id>', methods = ['POST'])
@@ -956,7 +957,7 @@ def add_phone_comm(id):
         })
         return "Phone Communication Added Successfully"
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 @app.route('/meetings')
@@ -996,7 +997,7 @@ def meetings():
                 table_html = "None"
             return render_template("meetings.html", table_html = table_html)
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return render_template("error.html", error = e)
 
 @app.route('/add-meeting', methods = ['POST'])
@@ -1032,7 +1033,7 @@ def add_meeting():
             })
             return "Meeting Added Successfully"
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
     
 @app.route('/process-meeting-change', methods = ['POST'])
@@ -1041,7 +1042,7 @@ def process_meeting_change():
         meetings_col.update_one({'Meeting ID'} == int(request.form['id']), {"$set": {"Type": request.form['meeting_type'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Start Date & Time": request.form['start_dt'], "Due Date & Time": request.form['end_dt'], "Product(s)": request.form['prods'], "Agenda": request.form['agenda']}})
         return "Meeting Change Processed Successfully"
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 def create_contact(name, mobile, email, designation, company):
@@ -1100,7 +1101,7 @@ def create_contact(name, mobile, email, designation, company):
             })
             return hs_id
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 @app.route('/reminders')
@@ -1138,7 +1139,7 @@ def reminders():
                 table_html = "None"
             return render_template("reminders.html", table_html = table_html)
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return render_template("error.html", error = e)
 
 @app.route('/add-reminder', methods = ['POST'])
@@ -1161,7 +1162,7 @@ def add_reminder():
         get_reminder_entries(reminder, start_date, end_date, recurrence, start_time, company_id, company, contact_id, contact)
         return "Reminder Added Successfully"
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 def get_reminder_entries(reminder, start_date, end_date, recurrence, time, company_id, company, contact_id, contact):
@@ -1196,7 +1197,7 @@ def get_reminder_entries(reminder, start_date, end_date, recurrence, time, compa
                 })
         return None
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 @app.route('/check-reminder', methods = ['POST'])
@@ -1208,7 +1209,7 @@ def check_reminder():
         }})
         return "Reminder Checked Successfully"
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 @app.route('/contact-lists', methods = ['GET', 'POST'])
@@ -1265,7 +1266,7 @@ def contact_lists():
                 table_lists_html = ""
             return render_template("contact_lists.html", list_contacts_html = table_html, lists_table_html = table_lists_html)
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return render_template("error.html", error = e)
 
 @app.route('/add-list', methods = ['POST'])
@@ -1302,7 +1303,7 @@ def add_list():
                 })
             return "List Added Successfully"
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 @app.route('/contact-list/<id>', methods = ['GET', 'POST'])
@@ -1341,7 +1342,7 @@ def view_contact_list(id):
                 table_html = ""
             return render_template("view_contact_list.html", table_html = table_html, list_name = contact_lists_col.find_one({'List ID': int(id)})['Name'], list_id = int(id))
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return render_template("error.html", error = e)
 
 @app.route('/edit-list/<id>', methods = ['GET', 'POST'])
@@ -1381,7 +1382,7 @@ def edit_list(id):
                 table_edit_html = ""
             return render_template("edit_contact_list.html", list_id = id, list_name = list_name, table_edit_html = table_edit_html)
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return render_template("error.html", error = e)
 
 @app.route('/save-edit-list', methods = ['POST'])
@@ -1411,7 +1412,7 @@ def save_edit_list():
                 })
             return "List Edited Successfully"
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return render_template("error.html", error = e)
 
 @app.route('/bulk-email-log', methods = ['GET', 'POST'])
@@ -1459,7 +1460,7 @@ def bulk_email():
                 lodt = "Not Checked"
             return render_template("bulk_email.html", access_level = session['access_level'], dropdown_options_html = dropdown_options_html, table_html = table_html, lodt = lodt)
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             return render_template("error.html", error = e)
 
 @app.route('/send-log', methods = ['GET', 'POST'])
@@ -1644,7 +1645,7 @@ def bulk_email_opened_status():
             os.environ['check_type'] = "complete"
             message = "Opened Status Checked Successfully"
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             os.environ['last_opened_status_checked'] = str(datetime.now(pytz.timezone('Asia/Kolkata')))
             os.environ['check_type'] = "partial"
             print("HelpScout ID:", str(row[11]))
@@ -1742,7 +1743,7 @@ def add_bulk_email_log():
             })
             return "Bulk Email Log Added Successfully"
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return render_template("error.html", error = e)
 
 @app.route('/login')
