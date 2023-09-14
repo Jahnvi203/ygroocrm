@@ -35,3 +35,4 @@ tzdata==2023.3
 urllib3==2.0.4
 Werkzeug==2.3.7
 wsproto==1.2.0
+urllib
