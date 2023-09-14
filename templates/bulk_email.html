@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Email Log</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+</head>
+<body>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js" integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V" crossorigin="anonymous"></script>
+    <div id="sidebar" class="sidebar">
+        <a id="home" class="na" onclick="menu(this.id)" href="/">Home</a>
+        <a id="companies" class="na" onclick="menu(this.id)" href="/companies">Companies</a>
+        <a id="contacts" class="na" onclick="menu(this.id)" href="/contacts">Contacts</a>
+        <a id="contact_lists" class="na" onclick="menu(this.id)" href="/contact-lists">Contact Lists</a>
+        <a id="meetings" class="na" onclick="menu(this.id)" href="/meetings">Meetings</a>
+        <a id="reminders" class="na" onclick="menu(this.id)" href="/reminders">Reminders</a>
+        <a id="bulk_email_log" class="active" onclick="menu(this.id)" href="/bulk-email-log">Bulk Email Log</a>
+    </div>
+    <script>
+        function add_bulk_email_log() {
+            const name = document.getElementById("add_log_name");
+            const list = document.getElementById("add_log_list");
+            const list_name = list.options[list.selectedIndex].text;
+            const product = document.getElementById("add_log_product");
+            if (name.value === "") {
+                alert("Name is empty")
+            } else {
+                $.ajax({
+                    type: 'POST',
+                    url: '/add-bulk-email-log',
+                    data: {
+                        name: name.value,
+                        list_id: list.value,
+                        list_name: list_name,
+                        product: product.value
+                    },
+                    success: function(response) {
+                        if (response === "Bulk Email Log Already Added") {
+                            alert("Bulk email log has already been added")
+                        } else if (response === "Bulk Email Log Added Successfully") {
+                            location.reload();
+                        }
+                    }
+                });
+            }
+        };
+        function send_log(id, button_id) {
+            console.log(id);
+            $.ajax({
+                type: 'POST',
+                url: '/send-log',
+                data: {
+                    id: id
+                },
+                success: function(response) {
+                    if (response === "Bulk Emails Sent Out Successfully") {
+                        alert("Bulk emails sent out successfully");
+                        location.reload();
+                    } else if (response === "No Contacts in List") {
+                        alert("No contacts in the contacts list so no bulk emails to send out")
+                    } else {
+                        alert("Bulk emails NOT sent out.", response)
+                    }
+                }
+            });
+        }
+        function check_open_status() {
+            location.href = "/bulk-email-opened-status";
+        }
+    </script>
+    <div class="content">
+        <h1>Bulk Email Log</h1>
+        <br>
+        {% if access_level == "admin" %}
+            <button class="view_button" type="button" data-bs-toggle="modal" data-bs-target="#add_log_modal">Add New Log</button>
+            <div class="modal fade" id="add_log_modal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">New Log</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label for="add_log_name">Name</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <input id="add_log_name" type="text">
+                                </div>
+                                <div class="my-2"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label for="add_log_list">Contacts List</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <select id="add_log_list">
+                                        {{ dropdown_options_html|safe }}
+                                    </select>
+                                </div>
+                                <div class="my-2"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label for="add_log_product">Product</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <select id="add_log_product">
+                                        <option value="YGROO.ART">YGROO.ART</option>
+                                        <option value="YGROO.TRAINING">YGROO.TRAINING</option>
+                                    </select>
+                                </div>
+                                <div class="my-2"></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" onclick="add_bulk_email_log()" class="view_button" data-bs-dismiss="modal">Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br><br>
+        {% endif %}
+        <button type="button" class="edit_button" onclick="check_open_status()">Check Opened Status</button>&nbsp;<span>{{ last_checked }}</span>
+        <br><br>
+        <div class="table_container">
+            {{ table_html|safe }}
+        </div>
+    </div>
+</body>
+</html>
