@@ -1,0 +1,115 @@
+.sidebar {
+    width: 100vw;
+    background-color: #d3d3d3;
+    height: auto;
+    display: inline-block;
+}
+
+.sidebar a {
+    display: block;
+    float: left;
+    width: fit-content;
+    color: black;
+    padding: 10px 20px 12px 20px;
+    text-decoration: none;
+}
+
+.sidebar a.active {
+    background-color: #c00000;
+    color: white;
+}
+
+.sidebar a.na {
+    background-color: none;
+    color: black;
+}
+  
+.sidebar a.na:hover {
+    background-color: #5a5a5a;
+    color: white;
+}
+
+.content {
+    margin: 20px 40px;
+}
+  
+@media screen and (max-width: 480px) {
+    .sidebar a {
+        width: 100%;
+        text-align: center;
+        float: none;
+    }
+}
+
+.view_button {
+    background-color: #c00000;
+    color: white;
+    padding: 5px 15px 8px 15px;
+    border-radius: 25px;
+    border: none;
+}
+
+.edit_button {
+    background-color: #5a5a5a;
+    color: white;
+    padding: 5px 15px 8px 15px;
+    border-radius: 25px;
+    border: none;
+}
+
+.disabled_button {
+    background-color: #d3d3d3;
+    color: white;
+    padding: 5px 15px 8px 15px;
+    border-radius: 25px;
+    border: none;
+}
+
+table, th, td {
+    border-style: solid;
+    border-color: #d3d3d3;
+    border-width: 2px !important;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 5px 15px 8px 15px;
+    vertical-align: -webkit-baseline-middle;
+}
+
+.card-header {
+    background-color: #d3d3d3 !important;
+}
+
+p {
+    margin-bottom: 0.25rem !important;
+}
+
+.table_container {
+    overflow-x: auto;
+}
+
+input:not([type="checkbox"]), select, textarea {
+    padding: 5px 15px 8px 15px;
+    width: 100%;
+    border: 2px solid #5a5a5a;
+    background-color: #f5f5f5;
+    border-radius: 25px;
+}
+
+label {
+    vertical-align: -webkit-baseline-middle;
+}
+
+.communication_table {
+    font-size: 0.75rem;
+}
+
+.attention {
+    color: #c00000;
+    font-weight: bold;
+}
+
+.login {
+    max-width: 300px;
+}
