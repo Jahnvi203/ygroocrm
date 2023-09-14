@@ -2,6 +2,8 @@ import requests
 import re
 from copy import deepcopy
 from flask import Flask, render_template, request, redirect, url_for, session, abort
+from flask_pymongo import PyMongo
+from pymongo import MongoClient
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta, timezone
@@ -12,6 +14,18 @@ import pytz
 
 app = Flask(__name__)
 app.secret_key = os.getenv("app_secret_key")
+app.config['MONGO_URI'] = f'mongodb+srv://Jahnvi203:{os.getenv("mongodb_pwd")}@cluster0.cn63w2k.mongodb.net/?retryWrites=true&w=majority'
+mongo = PyMongo(app)
+
+companies_col = mongo.db.companies
+contacts_col = mongo.db.contacts
+meetings_col = mongo.db.meetings
+reminders_col = mongo.db.reminders
+phone_comms_col = mongo.db.phone_comms
+contact_lists_col = mongo.db.contact_lists
+lists_contacts_col = mongo.db.lists_contacts
+bulk_emails_col = mongo.db.bulk_emails
+log_col = mongo.db.log
 
 @app.route('/')
 def index():
@@ -20,31 +34,35 @@ def index():
     elif session['access_level'] != "admin" and session['access_level'] != "sales":
         abort(403)
     else:
-        table_df = pd.read_csv("static/resources/reminders.csv")
-        table_df = table_df[table_df['Show'] == True].sort_values('Due Date & Time')
         today_dt = datetime.now(timezone(timedelta(hours = 5, minutes = 30)))
         current_week_dt = datetime.now(timezone(timedelta(hours = 5, minutes = 30))) + timedelta(days = 7)
-        pending_df = table_df[pd.to_datetime(table_df['Due Date & Time']).dt.date < today_dt.date()]
-        due_today_df = table_df[pd.to_datetime(table_df['Due Date & Time']).dt.date == today_dt.date()]
-        due_week_df = table_df[(today_dt.date() < pd.to_datetime(table_df['Due Date & Time']).dt.date) & (pd.to_datetime(table_df['Due Date & Time']).dt.date <= current_week_dt.date())]
-        pending_list = pending_df.values.tolist()
-        due_today_list = due_today_df.values.tolist()
-        due_week_list = due_week_df.values.tolist()
+        pending_list = list(reminders_col.find({
+            'Show': True,
+            'Due Date & Time': {'$lt': today_dt}
+        }).sort('Due Date & Time'))
+        due_today_list = list(reminders_col.find({
+            'Show': True,
+            'Due Date & Time': {'$gte': today_dt, '$lt': current_week_dt}
+        }).sort('Due Date & Time'))
+        due_week_list = list(reminders_col.find({
+            'Show': True,
+            'Due Date & Time': {'$gte': current_week_dt}
+        }).sort('Due Date & Time'))
         pending_rows_html = ""
         due_today_rows_html = ""
         due_week_rows_html = ""
         if len(pending_list) > 0:
             pending_rows_html = ""
             for i in range(len(pending_list)):
-                new_dt = datetime.strptime(pending_list[i][7], "%Y-%m-%dT%H:%M").replace(tzinfo = pytz.timezone('Asia/Kolkata'))
+                new_dt = datetime.strptime(pending_list[i]['Due Date & Time'], "%Y-%m-%dT%H:%M").replace(tzinfo = pytz.timezone('Asia/Kolkata'))
                 due_since = datetime.now(timezone(timedelta(hours = 5, minutes = 30))) - new_dt
                 due_since = due_since.days
                 pending_rows_html += f"""<tr>
-                    <td><input id="reminder_check_{pending_list[i][0]}" onchange="check_reminder({pending_list[i][0]})" type="checkbox"></td>
-                    <td>{pending_list[i][1]}</td>
-                    <td>{pending_list[i][3]}</td>
-                    <td>{pending_list[i][5]}</td>
-                    <td>{pending_list[i][6]}</td>
+                    <td><input id="reminder_check_{pending_list[i]['Reminder ID']}" onchange="check_reminder({pending_list[i]['Reminder ID']})" type="checkbox"></td>
+                    <td>{pending_list[i]['Reminder']}</td>
+                    <td>{pending_list[i]['Company']}</td>
+                    <td>{pending_list[i]['Contact']}</td>
+                    <td>{pending_list[i]['Recurrence']}</td>
                     <td><p class="attention">{new_dt.strftime("%d/%m/%Y %I:%M %p")}</p></td>
                     <td><p class="attention">{due_since} days</p></td>
                 </tr>"""
@@ -65,15 +83,15 @@ def index():
         if len(due_today_list) > 0:
             due_today_rows_html = ""
             for i in range(len(due_today_list)):
-                new_dt = datetime.strptime(due_today_list[i][7], "%Y-%m-%dT%H:%M").replace(tzinfo = pytz.timezone('Asia/Kolkata'))
+                new_dt = datetime.strptime(due_today_list[i]['Due Date & Time'], "%Y-%m-%dT%H:%M").replace(tzinfo = pytz.timezone('Asia/Kolkata'))
                 due_since = datetime.now(timezone(timedelta(hours = 5, minutes = 30))) - new_dt
                 due_since = due_since.days
                 due_today_rows_html += f"""<tr>
-                    <td><input id="reminder_check_{due_today_list[i][0]}" onchange="check_reminder({due_today_list[i][0]})" type="checkbox"></td>
-                    <td>{due_today_list[i][1]}</td>
-                    <td>{due_today_list[i][3]}</td>
-                    <td>{due_today_list[i][5]}</td>
-                    <td>{due_today_list[i][6]}</td>
+                    <td><input id="reminder_check_{due_today_list[i]['Reminder ID']}" onchange="check_reminder({due_today_list[i]['Reminder ID']})" type="checkbox"></td>
+                    <td>{due_today_list[i]['Reminder']}</td>
+                    <td>{due_today_list[i]['Company']}</td>
+                    <td>{due_today_list[i]['Contact']}</td>
+                    <td>{due_today_list[i]['Recurrence']}</td>
                     <td><p class="attention">{new_dt.strftime("%d/%m/%Y %I:%M %p")}</p></td>
                 </tr>"""
             due_today_html = f"""<table class="table table-responsive">
@@ -92,15 +110,15 @@ def index():
         if len(due_week_list) > 0:
             due_week_rows_html = ""
             for i in range(len(due_week_list)):
-                new_dt = datetime.strptime(due_week_list[i][7], "%Y-%m-%dT%H:%M").replace(tzinfo = pytz.timezone('Asia/Kolkata'))
+                new_dt = datetime.strptime(due_week_list[i]['Due Date & Time'], "%Y-%m-%dT%H:%M").replace(tzinfo = pytz.timezone('Asia/Kolkata'))
                 due_since = datetime.now(timezone(timedelta(hours = 5, minutes = 30))) - new_dt
                 due_since = due_since.days
                 due_week_rows_html += f"""<tr>
-                    <td><input id="reminder_check_{due_week_list[i][0]}" onchange="check_reminder({due_week_list[i][0]})" type="checkbox"></td>
-                    <td>{due_week_list[i][1]}</td>
-                    <td>{due_week_list[i][3]}</td>
-                    <td>{due_week_list[i][5]}</td>
-                    <td>{due_week_list[i][6]}</td>
+                    <td><input id="reminder_check_{due_week_list[i]['Reminder ID']}" onchange="check_reminder({due_week_list[i]['Reminder ID']})" type="checkbox"></td>
+                    <td>{due_week_list[i]['Reminder']}</td>
+                    <td>{due_week_list[i]['Company']}</td>
+                    <td>{due_week_list[i]['Contact']}</td>
+                    <td>{due_week_list[i]['Recurrence']}</td>
                     <td><p class="attention">{new_dt.strftime("%d/%m/%Y %I:%M %p")}</p></td>
                 </tr>"""
             due_week_html = f"""<table class="table table-responsive">
@@ -125,34 +143,34 @@ def companies():
     elif session['access_level'] != "admin" and session['access_level'] != "sales":
         abort(403)
     else:
-        table_df = pd.read_csv("static/resources/companies.csv")
-        table = table_df.values.tolist()
+        table = list(companies_col.find())
         statuses = ['Prospect', 'Called', 'Emailed', 'Not Interested', 'Proposal Sent', 'Meeting Scheduled', 'MoU Signed']
         if len(table) > 0:
             rows_html = ""
             for i in range(len(table)):
                 rows_html += f"""<tr>
-                    <td>{table[i][0]}</td>
-                    <td>{table[i][1]}</td>
-                    <td>{table[i][2]}</td>
-                    <td>{table[i][3]}</td>
+                    <td>{table[i]['Company ID']}</td>
+                    <td>{table[i]['Company']}</td>
+                    <td>{table[i]['State']}</td>
+                    <td>{table[i]['Sector']}</td>
+                    <td>{table[i]['Employees']}</td>
                     <td>
-                        <select id="status_{table[i][0]}" onchange="status_change({table[i][0]}, this.value)">
-                            <option value="Prospect"{" selected" if table[i][4] == "Prospect" else ""}>Prospect</option>
-                            <option value="Called"{" selected" if table[i][4] == "Called" else ""}>Called</option>
-                            <option value="Emailed"{" selected" if table[i][4] == "Emailed" else ""}>Emailed</option>
-                            <option value="Not Interested"{" selected" if table[i][4] == "Not Interested" else ""}>Not Interested</option>
-                            <option value="Proposal Sent"{" selected" if table[i][4] == "Proposal Sent" else ""}>Proposal Sent</option>
-                            <option value="Meeting Scheduled"{" selected" if table[i][4] == "Meeting Scheduled" else ""}>Meeting Scheduled</option>
-                            <option value="In Discussion (Hot)"{" selected" if table[i][4] == "In Discussion (Hot)" else ""}>In Discussion (Hot)</option>
-                            <option value="In Discussion (Cold)"{" selected" if table[i][4] == "In Discussion (Cold)" else ""}>In Discussion (Cold)</option>
-                            <option value="MoU Signed"{" selected" if table[i][4] == "MoU Signed" else ""}>MoU Signed</option>
+                        <select id="status_{table[i]['Company ID']}" onchange="status_change({table[i]['Company ID']}, this.value)">
+                            <option value="Prospect"{" selected" if table[i]['Status ID'] == "Prospect" else ""}>Prospect</option>
+                            <option value="Called"{" selected" if table[i]['Status ID'] == "Called" else ""}>Called</option>
+                            <option value="Emailed"{" selected" if table[i]['Status ID'] == "Emailed" else ""}>Emailed</option>
+                            <option value="Not Interested"{" selected" if table[i]['Status ID'] == "Not Interested" else ""}>Not Interested</option>
+                            <option value="Proposal Sent"{" selected" if table[i]['Status ID'] == "Proposal Sent" else ""}>Proposal Sent</option>
+                            <option value="Meeting Scheduled"{" selected" if table[i]['Status ID'] == "Meeting Scheduled" else ""}>Meeting Scheduled</option>
+                            <option value="In Discussion (Hot)"{" selected" if table[i]['Status ID'] == "In Discussion (Hot)" else ""}>In Discussion (Hot)</option>
+                            <option value="In Discussion (Cold)"{" selected" if table[i]['Status ID'] == "In Discussion (Cold)" else ""}>In Discussion (Cold)</option>
+                            <option value="MoU Signed"{" selected" if table[i]['Status ID'] == "MoU Signed" else ""}>MoU Signed</option>
                         </select>
                     </td>
-                    <td><button id="edit_company_{table[i][0]}" class="edit_button" data-bs-toggle="modal" data-bs-target="#edit_company_modal_{table[i][0]}">Edit</button></td>
-                    <td><a href="/company/{table[i][0]}"><button class="view_button">View</button></a></td>
+                    <td><button id="edit_company_{table[i]['Company ID']}" class="edit_button" data-bs-toggle="modal" data-bs-target="#edit_company_modal_{table[i]['Company ID']}">Edit</button></td>
+                    <td><a href="/company/{table[i]['Company ID']}"><button class="view_button">View</button></a></td>
                 </tr>
-                <div class="modal fade" id="edit_company_modal_{table[i][0]}" tabindex="-1" aria-hidden="true">
+                <div class="modal fade" id="edit_company_modal_{table[i]['Company ID']}" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -162,41 +180,115 @@ def companies():
                             <div class="modal-body">
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_company_name_{table[i][0]}">Name</label>
+                                        <label for="edit_company_name_{table[i]['Company ID']}">Name</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input id="edit_company_name_{table[i][0]}" type="text" value="{table[i][1]}">
+                                        <input id="edit_company_name_{table[i]['Company ID']}" type="text" value="{table[i][1]}">
                                     </div>
                                     <div class="my-2"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_company_state_{table[i][0]}">State</label>
+                                        <label for="edit_company_state_{table[i]['Company ID']}">State</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <select id="edit_company_state_{table[i][0]}">
-                                            <option value="Karnataka"{" selected" if table[i][2] == "Karnataka" else ""}>Karnataka</option>
-                                            <option value="Punjab"{" selected" if table[i][2] == "Punjab" else ""}>Punjab</option>
-                                            <option value="Maharashtra"{" selected" if table[i][2] == "Maharashtra" else ""}>Maharashtra</option>
-                                            <option value="Uttar Pradesh"{" selected" if table[i][2] == "Uttar Pradesh" else ""}>Uttar Pradesh</option>
-                                            <option value="Tamil Nadu"{" selected" if table[i][2] == "Tamil Nadu" else ""}>Tamil Nadu</option>
-                                            <option value="Delhi"{" selected" if table[i][2] == "Delhi" else ""}>Delhi</option>
+                                        <select id="edit_company_state_{table[i]['Company ID']}">
+                                            <option value="Dubai Marina"{{" selected" if {table[i]['State']} == "Dubai Marina" else ""}}>Dubai Marina</option>
+                                            <option value="Mumbai"{{" selected" if {table[i]['State']} == "Mumbai" else ""}}>Mumbai</option>
+                                            <option value="Bengaluru"{{" selected" if {table[i]['State']} == "Bengaluru" else ""}}>Bengaluru</option>
+                                            <option value="Pune"{{" selected" if {table[i]['State']} == "Pune" else ""}}>Pune</option>
+                                            <option value="Morelia"{{" selected" if {table[i]['State']} == "Morelia" else ""}}>Morelia</option>
+                                            <option value="Kolkata"{{" selected" if {table[i]['State']} == "Kolkata" else ""}}>Kolkata</option>
+                                            <option value="Lille"{{" selected" if {table[i]['State']} == "Lille" else ""}}>Lille</option>
+                                            <option value="Delhi"{{" selected" if {table[i]['State']} == "Delhi" else ""}}>Delhi</option>
+                                            <option value="London"{{" selected" if {table[i]['State']} == "London" else ""}}>London</option>
+                                            <option value="Mooresville"{{" selected" if {table[i]['State']} == "Mooresville" else ""}}>Mooresville</option>
+                                            <option value="Seattle"{{" selected" if {table[i]['State']} == "Seattle" else ""}}>Seattle</option>
+                                            <option value="Stockholm"{{" selected" if {table[i]['State']} == "Stockholm" else ""}}>Stockholm</option>
+                                            <option value="Minneapolis"{{" selected" if {table[i]['State']} == "Minneapolis" else ""}}>Minneapolis</option>
+                                            <option value="Chennai"{{" selected" if {table[i]['State']} == "Chennai" else ""}}>Chennai</option>
+                                            <option value="Gurgaon"{{" selected" if {table[i]['State']} == "Gurgaon" else ""}}>Gurgaon</option>
+                                            <option value="Noida"{{" selected" if {table[i]['State']} == "Noida" else ""}}>Noida</option>
+                                            <option value="Abu Dhabi"{{" selected" if {table[i]['State']} == "Abu Dhabi" else ""}}>Abu Dhabi</option>
+                                            <option value="Howrah"{{" selected" if {table[i]['State']} == "Howrah" else ""}}>Howrah</option>
+                                            <option value="New Delhi"{{" selected" if {table[i]['State']} == "New Delhi" else ""}}>New Delhi</option>
+                                            <option value="Gurugram"{{" selected" if {table[i]['State']} == "Gurugram" else ""}}>Gurugram</option>
+                                            <option value="Fremont"{{" selected" if {table[i]['State']} == "Fremont" else ""}}>Fremont</option>
+                                            <option value="Dubai"{{" selected" if {table[i]['State']} == "Dubai" else ""}}>Dubai</option>
+                                            <option value="Jaipur"{{" selected" if {table[i]['State']} == "Jaipur" else ""}}>Jaipur</option>
+                                            <option value="Goa"{{" selected" if {table[i]['State']} == "Goa" else ""}}>Goa</option>
+                                            <option value="Ahmedabad"{{" selected" if {table[i]['State']} == "Ahmedabad" else ""}}>Ahmedabad</option>
+                                            <option value="Kochi"{{" selected" if {table[i]['State']} == "Kochi" else ""}}>Kochi</option>
+                                            <option value="Visakhapatnam"{{" selected" if {table[i]['State']} == "Visakhapatnam" else ""}}>Visakhapatnam</option>
+                                            <option value="Hyderabad"{{" selected" if {table[i]['State']} == "Hyderabad" else ""}}>Hyderabad</option>
+                                            <option value="Coimbatore"{{" selected" if {table[i]['State']} == "Coimbatore" else ""}}>Coimbatore</option>
+                                            <option value="Delhi"{{" selected" if {table[i]['State']} == "Delhi" else ""}}>Delhi</option>
+                                            <option value="Boca Raton"{{" selected" if {table[i]['State']} == "Boca Raton" else ""}}>Boca Raton</option>
+                                            <option value="Tiruppur"{{" selected" if {table[i]['State']} == "Tiruppur" else ""}}>Tiruppur</option>
+                                            <option value="Gandhi Nagar"{{" selected" if {table[i]['State']} == "Gandhi Nagar" else ""}}>Gandhi Nagar</option>
+                                            <option value="Raipur"{{" selected" if {table[i]['State']} == "Raipur" else ""}}>Raipur</option>
+                                            <option value="Alappuzha"{{" selected" if {table[i]['State']} == "Alappuzha" else ""}}>Alappuzha</option>
+                                            <option value="Bhagalpur"{{" selected" if {table[i]['State']} == "Bhagalpur" else ""}}>Bhagalpur</option>
+                                            <option value="Hyderabad"{{" selected" if {table[i]['State']} == "Hyderabad" else ""}}>Hyderabad</option>
+                                            <option value="Manama"{{" selected" if {table[i]['State']} == "Manama" else ""}}>Manama</option>
+                                            <option value="Riyadh"{{" selected" if {table[i]['State']} == "Riyadh" else ""}}>Riyadh</option>
+                                            <option value="San Francisco"{{" selected" if {table[i]['State']} == "San Francisco" else ""}}>San Francisco</option>
+                                            <option value="Delft"{{" selected" if {table[i]['State']} == "Delft" else ""}}>Delft</option>
+                                            <option value="Sambalpur"{{" selected" if {table[i]['State']} == "Sambalpur" else ""}}>Sambalpur</option>
+                                            <option value="Shahjahanpur"{{" selected" if {table[i]['State']} == "Shahjahanpur" else ""}}>Shahjahanpur</option>
+                                            <option value="Navi Mumbai"{{" selected" if {table[i]['State']} == "Navi Mumbai" else ""}}>Navi Mumbai</option>
+                                            <option value="Faridabad"{{" selected" if {table[i]['State']} == "Faridabad" else ""}}>Faridabad</option>
                                         </select>
                                     </div>
                                     <div class="my-2"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_company_website_{table[i][0]}">Website</label>
+                                        <label for="edit_company_sector_{table[i]['Company ID']}">Sector</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input id="edit_company_website_{table[i][0]}" type="text" value="{table[i][3]}">
+                                        <select id="edit_company_sector_{table[i]['Company ID']}">
+                                            <option value="Information Technology"{{" selected" if {table[i]['Sector']} == "Information Technology" else ""}}>Information Technology</option>
+                                            <option value="Healthcare"{{" selected" if {table[i]['Sector']} == "Healthcare" else ""}}>Healthcare</option>
+                                            <option value="Finance"{{" selected" if {table[i]['Sector']} == "Finance" else ""}}>Finance</option>
+                                            <option value="Education"{{" selected" if {table[i]['Sector']} == "Education" else ""}}>Education</option>
+                                            <option value="Manufacturing"{{" selected" if {table[i]['Sector']} == "Manufacturing" else ""}}>Manufacturing</option>
+                                            <option value="Retail"{{" selected" if {table[i]['Sector']} == "Retail" else ""}}>Retail</option>
+                                            <option value="Telecommunications"{{" selected" if {table[i]['Sector']} == "Telecommunications" else ""}}>Telecommunications</option>
+                                            <option value="Hospitality"{{" selected" if {table[i]['Sector']} == "Hospitality" else ""}}>Hospitality</option>
+                                            <option value="Energy"{{" selected" if {table[i]['Sector']} == "Energy" else ""}}>Energy</option>
+                                            <option value="Transportation"{{" selected" if {table[i]['Sector']} == "Transportation" else ""}}>Transportation</option>
+                                            <option value="Entertainment"{{" selected" if {table[i]['Sector']} == "Entertainment" else ""}}>Entertainment</option>
+                                            <option value="Agriculture"{{" selected" if {table[i]['Sector']} == "Agriculture" else ""}}>Agriculture</option>
+                                            <option value="Construction"{{" selected" if {table[i]['Sector']} == "Construction" else ""}}>Construction</option>
+                                            <option value="Pharmaceuticals"{{" selected" if {table[i]['Sector']} == "Pharmaceuticals" else ""}}>Pharmaceuticals</option>
+                                            <option value="Automotive"{{" selected" if {table[i]['Sector']} == "Automotive" else ""}}>Automotive</option>
+                                            <option value="Media"{{" selected" if {table[i]['Sector']} == "Media" else ""}}>Media</option>
+                                            <option value="Real Estate"{{" selected" if {table[i]['Sector']} == "Real Estate" else ""}}>Real Estate</option>
+                                            <option value="Aerospace"{{" selected" if {table[i]['Sector']} == "Aerospace" else ""}}>Aerospace</option>
+                                            <option value="Environmental"{{" selected" if {table[i]['Sector']} == "Environmental" else ""}}>Environmental</option>
+                                            <option value="Government"{{" selected" if {table[i]['Sector']} == "Government" else ""}}>Government</option>
+                                        </select>
+                                    </div>
+                                    <div class="my-2"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label for="edit_company_employees_{table[i]['Company ID']}">Employees</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select id="edit_company_employees_{table[i]['Company ID']}">
+                                            <option value="1k-5k"{" selected" if {table[i]['Employees']} == "1k-5k" else ""}>1k-5k</option>
+                                            <option value="5k-10k"{" selected" if {table[i]['Employees']} == "5k-10k" else ""}>5k-10k</option>
+                                            <option value="10k-50k"{" selected" if {table[i]['Employees']} == "10k-50k" else ""}>10k-50k</option>
+                                            <option value="1 Lakh+"{" selected" if {table[i]['Employees']} == "1 Lakh+" else ""}>1 Lakh+</option>
+                                        </select>
                                     </div>
                                     <div class="my-2"></div>
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" onclick="company_change({table[i][0]})" class="view_button" data-bs-dismiss="modal">Save</button>
+                                <button type="button" onclick="company_change({table[i]['Company ID']})" class="view_button" data-bs-dismiss="modal">Save</button>
                             </div>
                         </div>
                     </div>
@@ -206,8 +298,9 @@ def companies():
                     <th>S.No.</th>
                     <th>Company</th>
                     <th>State</th>
-                    <th>Website</th>
+                    <th>Sector</th>
                     <th>Status</th>
+                    <th>Employees</th>
                     <th>Edit</th>
                     <th>View</th>
                 </tr>
@@ -224,20 +317,19 @@ def contacts():
     elif session['access_level'] != "admin" and session['access_level'] != "sales":
         abort(403)
     else:
-        table_df = pd.read_csv("static/resources/contacts.csv")
-        table = table_df.values.tolist()
+        table = list(contacts_col.find())
         rows_html = ""
         if len(table) > 0:
             for i in range(len(table)):
                 rows_html += f"""<tr>
-                    <td>{table[i][0]}</td>
-                    <td>{table[i][1]}</td>
-                    <td>{table[i][2]}</td>
-                    <td>{table[i][4]}</td>
-                    <td>{table[i][5]}</td>
-                    <td>{table[i][6]}</td>
-                    <td><a href="/contact/{table[i][0]}/communication"><button class="view_button">Communication</button></a></td>
-                    <td><a href="https://secure.helpscout.net/customers/{table[i][7]}" target="_blank"><button id="hs_url_{table[i][0]}" class="edit_button">Start</button></a></td>
+                    <td>{table[i]['Contact ID']}</td>
+                    <td>{table[i]['Name']}</td>
+                    <td>{table[i]['Designation']}</td>
+                    <td>{table[i]['Company']}</td>
+                    <td>{table[i]['Email']}</td>
+                    <td>{table[i]['Mobile']}</td>
+                    <td><a href="/contact/{table[i]['Contact ID']}/communication"><button class="view_button">Communication</button></a></td>
+                    <td><a href="https://secure.helpscout.net/customers/{table[i]['HelpScout ID']}" target="_blank"><button id="hs_url_{table[i]['Contact ID']}" class="edit_button">Start</button></a></td>
                 </tr>"""
             table_html = f"""<table class="table table-responsive">
                 <tr>
@@ -260,9 +352,7 @@ def contacts():
 def process_status_change():
     company_id = int(request.form['company_id'])
     new_status = request.form['new_status']
-    table_df = pd.read_csv("static/resources/companies.csv")
-    table_df.loc[table_df['Company ID'] == company_id, 'Status'] = new_status
-    table_df.to_csv("static/resources/companies.csv", index = False)
+    companies_col.update_one({'Company ID': company_id}, {"$set": {'Status': new_status}})
     return "Status Change Processed Successfully"
 
 @app.route('/company/<id>')
@@ -271,62 +361,54 @@ def view_company(id):
         return redirect(url_for("login"))
     else:
         id = int(id)
-        companies_df = pd.read_csv("static/resources/companies.csv")
-        company_row = companies_df[companies_df['Company ID'] == id].values.tolist()[0]
+        company_row = companies_col.find_one({'Company ID': id})
         company_options_html = ""
-        for company in companies_df[['Company ID', 'Company']].values.tolist():
-            company_options_html += f'<option value="{company[1]}_{company[0]}"{" selected" if company[1] == company_row[1] else ""}>{company[1]}</option>'
-        status = f"""<select id="status_{id}" onchange="status_change({company_row[0]}, this.value)">
-            <option value="Prospect"{" selected" if company_row[4] == "Prospect" else ""}>Prospect</option>
-            <option value="Called"{" selected" if company_row[4] == "Called" else ""}>Called</option>
-            <option value="Emailed"{" selected" if company_row[4] == "Emailed" else ""}>Emailed</option>
-            <option value="Not Interested"{" selected" if company_row[4] == "Not Interested" else ""}>Not Interested</option>
-            <option value="Proposal Sent"{" selected" if company_row[4] == "Proposal Sent" else ""}>Proposal Sent</option>
-            <option value="Meeting Scheduled"{" selected" if company_row[4] == "Meeting Scheduled" else ""}>Meeting Scheduled</option>
-            <option value="In Discussion (Hot)"{" selected" if company_row[4] == "In Discussion (Hot)" else ""}>In Discussion (Hot)</option>
-            <option value="In Discussion (Cold)"{" selected" if company_row[4] == "In Discussion (Cold)" else ""}>In Discussion (Cold)</option>
-            <option value="MoU Signed"{" selected" if company_row[4] == "MoU Signed" else ""}>MoU Signed</option>
+        for company in list(companies_col.find()):
+            company_options_html += f'<option value="{company["Company"]}_{company["Company ID"]}"{" selected" if company[1] == company_row["Company"] else ""}>{company["Company ID"]}</option>'
+        status = f"""<select id="status_{id}" onchange="status_change({company_row['Company ID']}, this.value)">
+            <option value="Prospect"{" selected" if company_row['Status'] == "Prospect" else ""}>Prospect</option>
+            <option value="Called"{" selected" if company_row['Status'] == "Called" else ""}>Called</option>
+            <option value="Emailed"{" selected" if company_row['Status'] == "Emailed" else ""}>Emailed</option>
+            <option value="Not Interested"{" selected" if company_row['Status'] == "Not Interested" else ""}>Not Interested</option>
+            <option value="Proposal Sent"{" selected" if company_row['Status'] == "Proposal Sent" else ""}>Proposal Sent</option>
+            <option value="Meeting Scheduled"{" selected" if company_row['Status'] == "Meeting Scheduled" else ""}>Meeting Scheduled</option>
+            <option value="In Discussion (Hot)"{" selected" if company_row['Status'] == "In Discussion (Hot)" else ""}>In Discussion (Hot)</option>
+            <option value="In Discussion (Cold)"{" selected" if company_row['Status'] == "In Discussion (Cold)" else ""}>In Discussion (Cold)</option>
+            <option value="MoU Signed"{" selected" if company_row['Status'] == "MoU Signed" else ""}>MoU Signed</option>
         </select>"""
-        contacts_df = pd.read_csv("static/resources/contacts.csv")
-        contacts_df = contacts_df[contacts_df['Company ID'] == company_row[0]]
-        contacts = contacts_df.values.tolist()
-        meetings_df = pd.read_csv("static/resources/meetings.csv")
-        meetings_df = meetings_df[meetings_df['Company ID'] == company_row[0]]
-        meetings = meetings_df.values.tolist()
-        reminders_df = pd.read_csv("static/resources/reminders.csv")
-        reminders_df = reminders_df[reminders_df['Company ID'] == company_row[0]]
-        reminders_df = reminders_df[reminders_df['Show'] == True].sort_values('Due Date & Time')
-        reminders = reminders_df.values.tolist()
+        contacts = list(contacts_col.find({'Company ID': id}))
+        meetings = list(meetings_col.find({'Company ID': id}))
+        reminders = list(reminders_col.find({'Company ID': id, 'Show': True}))
         company_contact_options_html = ""
         contacts_html = ""
         meetings_html = ""
         reminders_html = ""
         if len(contacts) > 0:
             for contact in contacts:
-                company_contact_options_html += f'<option value="{contact[1]}_{contact[0]}">{contact[1]}</option>'
+                company_contact_options_html += f'<option value="{contact["Name"]}_{contact["Contact ID"]}">{contact["Name"]}</option>'
                 contacts_html += f"""<tr>
-                    <td>{contact[1]}</td>
-                    <td>{contact[2]}</td>
-                    <td>{contact[5]}</td>
-                    <td>{contact[6]}</td>
-                    <td><button id="edit_contact_{contact[0]}" class="edit_button" data-bs-toggle="modal" data-bs-target="#edit_contact_modal_{contact[0]}">Edit</button></td>
-                    <td><a href="/contact/{contact[0]}/communication"><button class="view_button">Communication</button></a></td>
-                    <td><a href="https://secure.helpscout.net/customers/{contact[7]}" target="_blank"><button id="hs_url_{contact[0]}" class="edit_button">Start</button></a></td>
+                    <td>{contact['Name']}</td>
+                    <td>{contact['Designation']}</td>
+                    <td>{contact['Email']}</td>
+                    <td>{contact['Mobile']}</td>
+                    <td><button id="edit_contact_{contact['Contact ID']}" class="edit_button" data-bs-toggle="modal" data-bs-target="#edit_contact_modal_{contact['Contact ID']}">Edit</button></td>
+                    <td><a href="/contact/{contact['Contact ID']}/communication"><button class="view_button">Communication</button></a></td>
+                    <td><a href="https://secure.helpscout.net/customers/{contact['HelpScout ID']}" target="_blank"><button id="hs_url_{contact['Contact ID']}" class="edit_button">Start</button></a></td>
                 </tr>
-                <div class="modal fade" id="edit_contact_modal_{contact[0]}" tabindex="-1" aria-hidden="true">
+                <div class="modal fade" id="edit_contact_modal_{contact['Contact ID']}" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Edit {contact[1]} from {contact[4]}</h5>
+                                <h5 class="modal-title">Edit {contact['Name']} from {contact['Company']}</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_contact_company_{contact[0]}">Company</label>
+                                        <label for="edit_contact_company_{contact['Contact ID']}">Company</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <select id="edit_contact_company_{contact[0]}" disabled>
+                                        <select id="edit_contact_company_{contact['Contact ID']}" disabled>
                                             {company_options_html}
                                         </select>
                                     </div>
@@ -334,43 +416,43 @@ def view_company(id):
                                 </div>
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_contact_name_{contact[0]}">Name</label>
+                                        <label for="edit_contact_name_{contact['Contact ID']}">Name</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input id="edit_contact_name_{contact[0]}" type="text" value="{contact[1]}">
+                                        <input id="edit_contact_name_{contact['Contact ID']}" type="text" value="{contact['Name']}">
                                     </div>
                                     <div class="my-2"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_contact_designation_{contact[0]}">Designation</label>
+                                        <label for="edit_contact_designation_{contact['Contact ID']}">Designation</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input id="edit_contact_designation_{contact[0]}" type="text" value="{contact[2]}">
+                                        <input id="edit_contact_designation_{contact['Contact ID']}" type="text" value="{contact['Designation']}">
                                     </div>
                                     <div class="my-2"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_contact_email_{contact[0]}">Email</label>
+                                        <label for="edit_contact_email_{contact['Contact ID']}">Email</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input id="edit_contact_email_{contact[0]}" type="email" value="{contact[5]}" disabled>
+                                        <input id="edit_contact_email_{contact['Contact ID']}" type="email" value="{contact['Email']}" disabled>
                                     </div>
                                     <div class="my-2"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_contact_mobile_{contact[0]}">Mobile</label>
+                                        <label for="edit_contact_mobile_{contact['Contact ID']}">Mobile</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input id="edit_contact_mobile_{contact[0]}" type="tel" value="{contact[6]}">
+                                        <input id="edit_contact_mobile_{contact['Contact ID']}" type="tel" value="{contact['Mobile']}">
                                     </div>
                                     <div class="my-2"></div>
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" onclick="contact_change({contact[0]})" class="view_button" data-bs-dismiss="modal">Save</button>
+                                <button type="button" onclick="contact_change({contact['Contact ID']})" class="view_button" data-bs-dismiss="modal">Save</button>
                             </div>
                         </div>
                     </div>
@@ -394,27 +476,27 @@ def view_company(id):
         if len(meetings) > 0:
             for meeting in meetings:
                 meetings_html += f"""<tr>
-                    <td>{meeting[1]}</td>
-                    <td>{datetime.strptime(meeting[4], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
-                    <td>{datetime.strptime(meeting[5], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
+                    <td>{meeting['Type']}</td>
+                    <td>{datetime.strptime(meeting['Start Date & Time'], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
+                    <td>{datetime.strptime(meeting['End Date & Time'], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
                     <td>{meeting[6]}</td>
-                    <td>{meeting[7]}</td>
-                    <td><button id="edit_meeting_{meeting[0]}" class="edit_button" data-bs-toggle="modal" data-bs-target="#edit_meeting_modal_{meeting[0]}">Edit</button></td>
+                    <td>{meeting['Product(s) Pitched']}</td>
+                    <td><button id="edit_meeting_{meeting['Meeting ID']}" class="edit_button" data-bs-toggle="modal" data-bs-target="#edit_meeting_modal_{meeting['Meeting ID']}">Edit</button></td>
                 </tr>
-                <div class="modal fade" id="edit_meeting_modal_{meeting[0]}" tabindex="-1" aria-hidden="true">
+                <div class="modal fade" id="edit_meeting_modal_{meeting['Meeting ID']}" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Edit {meeting[1]} Meeting from {meeting[3]}</h5>
+                                <h5 class="modal-title">Edit {meeting['Type']} Meeting from {meeting['Company']}</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_meeting_company_{meeting[0]}">Company</label>
+                                        <label for="edit_meeting_company_{meeting['Meeting ID']}">Company</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <select id="edit_meeting_company_{meeting[0]}" disabled>
+                                        <select id="edit_meeting_company_{meeting['Meeting ID']}" disabled>
                                             {company_options_html}
                                         </select>
                                     </div>
@@ -422,72 +504,72 @@ def view_company(id):
                                 </div>
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_meeting_type_{meeting[0]}">Type</label>
+                                        <label for="edit_meeting_type_{meeting['Meeting ID']}">Type</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <select id="edit_meeting_type_{meeting[0]}">
-                                            <option value="Introduction"{" selected" if meeting[1] == "Introduction" else None}>Introduction</option>
-                                            <option value="Demo"{" selected" if meeting[1] == "Demo" else None}>Demo</option>
-                                            <option value="Go-Live"{" selected" if meeting[1] == "Go-Live" else None}>Go-Live</option>
+                                        <select id="edit_meeting_type_{meeting['Meeting ID']}">
+                                            <option value="Introduction"{" selected" if meeting['Type'] == "Introduction" else None}>Introduction</option>
+                                            <option value="Demo"{" selected" if meeting['Type'] == "Demo" else None}>Demo</option>
+                                            <option value="Go-Live"{" selected" if meeting['Type'] == "Go-Live" else None}>Go-Live</option>
                                         </select>
                                     </div>
                                     <div class="my-2"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_meeting_start_{meeting[0]}">Start Date & Time</label>
+                                        <label for="edit_meeting_start_{meeting['Meeting ID']}">Start Date & Time</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input type="datetime-local" id="edit_meeting_start_{meeting[0]}" value="{meeting[4]}">
+                                        <input type="datetime-local" id="edit_meeting_start_{meeting['Meeting ID']}" value="{meeting['Start Date & Time']}">
                                     </div>
                                     <div class="my-2"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_meeting_end_{meeting[0]}">End Date & Time</label>
+                                        <label for="edit_meeting_end_{meeting['Meeting ID']}">End Date & Time</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input type="datetime-local" id="edit_meeting_end_{meeting[0]}" value={meeting[5]}>
+                                        <input type="datetime-local" id="edit_meeting_end_{meeting['Meeting ID']}" value={meeting['End Date & Time']}>
                                     </div>
                                     <div class="my-2"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_meeting_prods_{meeting[0]}">Product(s) Pitched</label>
+                                        <label for="edit_meeting_prods_{meeting['Meeting ID']}">Product(s) Pitched</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <input id="ygroo_training" class="edit_meeting_prods_{meeting[0]}" type="checkbox" value="YGROO TRAINING"{" checked" if "YGROO TRAINING" in meeting[6].split(", ") else ""}>
+                                        <input id="ygroo_training" class="edit_meeting_prods_{meeting['Meeting ID']}" type="checkbox" value="YGROO TRAINING"{" checked" if "YGROO TRAINING" in meeting[6].split(", ") else ""}>
                                         <label for="ygroo_training">YGROO TRAINING</label>
                                         <br>
-                                        <input id="ygroo_art" class="edit_meeting_prods_{meeting[0]}" type="checkbox" value="YGROO ART"{" checked" if "YGROO ART" in meeting[6].split(", ") else ""}>
+                                        <input id="ygroo_art" class="edit_meeting_prods_{meeting['Meeting ID']}" type="checkbox" value="YGROO ART"{" checked" if "YGROO ART" in meeting[6].split(", ") else ""}>
                                         <label for="ygroo_art">YGROO ART</label>
                                         <br>
-                                        <input id="ygroo_pro" class="edit_meeting_prods_{meeting[0]}" type="checkbox" value="YGROO PRO"{" checked" if "YGROO PRO" in meeting[6].split(", ") else ""}>
+                                        <input id="ygroo_pro" class="edit_meeting_prods_{meeting['Meeting ID']}" type="checkbox" value="YGROO PRO"{" checked" if "YGROO PRO" in meeting[6].split(", ") else ""}>
                                         <label for="ygroo_pro">YGROO PRO</label>
                                         <br>
-                                        <input id="ygroo_studio" class="edit_meeting_prods_{meeting[0]}" type="checkbox" value="YGROO STUDIO"{" checked" if "YGROO STUDIO" in meeting[6].split(", ") else ""}>
+                                        <input id="ygroo_studio" class="edit_meeting_prods_{meeting['Meeting ID']}" type="checkbox" value="YGROO STUDIO"{" checked" if "YGROO STUDIO" in meeting[6].split(", ") else ""}>
                                         <label for="ygroo_studio">YGROO STUDIO</label>
                                         <br>
-                                        <input id="ygroo_care" class="edit_meeting_prods_{meeting[0]}" type="checkbox" value="YGROO CARE"{" checked" if "YGROO CARE" in meeting[6].split(", ") else ""}>
+                                        <input id="ygroo_care" class="edit_meeting_prods_{meeting['Meeting ID']}" type="checkbox" value="YGROO CARE"{" checked" if "YGROO CARE" in meeting[6].split(", ") else ""}>
                                         <label for="ygroo_care">YGROO CARE</label>
                                         <br>
-                                        <input id="ygroo_careers" class="edit_meeting_prods_{meeting[0]}" type="checkbox" value="YGROO CAREERS"{" checked" if "YGROO CAREERS" in meeting[6].split(", ") else ""}>
+                                        <input id="ygroo_careers" class="edit_meeting_prods_{meeting['Meeting ID']}" type="checkbox" value="YGROO CAREERS"{" checked" if "YGROO CAREERS" in meeting[6].split(", ") else ""}>
                                         <label for="ygroo_careers">YGROO CAREERS</label>
                                     </div>
                                     <div class="my-2"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="edit_meeting_agenda_{meeting[0]}">Agenda</label>
+                                        <label for="edit_meeting_agenda_{meeting['Meeting ID']}">Agenda</label>
                                     </div>
                                     <div class="col-md-9">
-                                        <textarea id="edit_meeting_agenda_{meeting[0]}" rows="5">{meeting[7]}</textarea>
+                                        <textarea id="edit_meeting_agenda_{meeting['Meeting ID']}" rows="5">{meeting['Product(s) Pitched']}</textarea>
                                     </div>
                                     <div class="my-2"></div>
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" onclick="meeting_change({meeting[0]})" class="view_button" data-bs-dismiss="modal">Save</button>
+                                <button type="button" onclick="meeting_change({meeting['Meeting ID']})" class="view_button" data-bs-dismiss="modal">Save</button>
                             </div>
                         </div>
                     </div>
@@ -510,11 +592,11 @@ def view_company(id):
         if len(reminders) > 0:
             for reminder in reminders:
                 reminders_html += f"""<tr>
-                    <td><input id="reminder_check_{reminder[0]}" onchange="check_reminder({reminder[0]})" type="checkbox"></td>
-                    <td>{reminder[1]}</td>
-                    <td>{reminder[5]}</td>
-                    <td>{reminder[6]}</td>
-                    <td>{datetime.strptime(reminder[7], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
+                    <td><input id="reminder_check_{reminder['Reminder ID']}" onchange="check_reminder({reminder['Reminder ID']})" type="checkbox"></td>
+                    <td>{reminder['Reminder']}</td>
+                    <td>{reminder['Contact']}</td>
+                    <td>{reminder['Recurrence']}</td>
+                    <td>{datetime.strptime(reminder['Due Date & Time'], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
                 </tr>"""
             reminders_table_html = f"""<table class="table table-responsive">
                 <tbody>
@@ -530,42 +612,34 @@ def view_company(id):
             </table>"""
         else:
             reminders_table_html = "None"
-        return render_template("view_company.html", id = id, name = company_row[1], state = company_row[2], website = company_row[3], status = status, contacts_html = contacts_table_html, meetings_html = meetings_table_html, reminders_html = reminders_table_html, company_options_html = company_options_html, company_contact_options_html = company_contact_options_html)
+        return render_template("view_company.html", id = id, name = company_row['Company'], state = company_row['State'], sector = company_row['Sector'], employees = company_row['Employees'], status = status, contacts_html = contacts_table_html, meetings_html = meetings_table_html, reminders_html = reminders_table_html, company_options_html = company_options_html, company_contact_options_html = company_contact_options_html)
 
 @app.route('/process-company-change', methods = ['POST'])
 def process_company_change():
-    table_df = table_df = pd.read_csv("static/resources/companies.csv")
-    table_df.loc[table_df['Company ID'] == int(request.form['id']), 'Company'] = request.form['name']
-    table_df.loc[table_df['Company ID'] == int(request.form['id']), 'State'] = request.form['state']
-    table_df.loc[table_df['Company ID'] == int(request.form['id']), 'Website'] = request.form['website']
-    table_df.to_csv("static/resources/companies.csv", columns = ['Company ID', 'Company', 'State', 'Website', 'Status'], index = False)
-    table_df = table_df = pd.read_csv("static/resources/contacts.csv")
-    contacts_df = table_df[table_df['Company ID'] == int(request.form['id'])]['HelpScout ID']
-    contacts_list = contacts_df.unique()
+    companies_col.update_one({'Company ID'} == int(request.form['id']), {"$set": {"Company": request.form['name'], "State": request.form['state'], "Sector": request.form['sector'], "Employees": request.form['Employees']}})
+    contacts_col.update_many({'Company ID'} == int(request.form['id']), {"$set": {"Company": request.form['name']}})
+    meetings_col.update_many({'Company ID'} == int(request.form['id']), {"$set": {"Company": request.form['name']}})
+    reminders_col.update_many({'Company ID'} == int(request.form['id']), {"$set": {"Company": request.form['name']}})
+    log_col.update_many({'Company ID'} == int(request.form['id']), {"$set": {"Company": request.form['name']}})
+    lists_contacts_col.update_many({'Company ID'} == int(request.form['id']), {"$set": {"Company": request.form['name']}})
     bearer_token = get_bearer_token()
     headers = {'Authorization': f"Bearer {bearer_token}"}
-    for contact in contacts_list:
+    for contact in contacts_col.find({'Company ID': int(request.form['id'])}):
         body = [{
             "op" : "replace",
             "path" : "/organization",
             "value" : f"{request.form['name']}"
         }]
-        requests.patch(f"https://api.helpscout.net/v2/customers/{contact}", headers = headers, json = body)
-    table_df.loc[table_df['Company ID'] == int(request.form['id']), 'Company'] = request.form['name']
-    table_df.to_csv("static/resources/contacts.csv", columns = ['Contact ID', 'Name', 'Designation', 'Company ID', 'Company', 'Email', 'Mobile'], index = False)
+        requests.patch(f"https://api.helpscout.net/v2/customers/{contact['HelpScout ID']}", headers = headers, json = body)
     return "Company Change Processed Successfully"
 
 @app.route('/process-contact-change', methods = ['POST'])
 def process_contact_change():
-    table_df = table_df = pd.read_csv("static/resources/contacts.csv")
-    table_df.loc[table_df['Contact ID'] == int(request.form['id']), 'Name'] = request.form['name']
-    table_df.loc[table_df['Contact ID'] == int(request.form['id']), 'Designation'] = request.form['designation']
-    table_df.loc[table_df['Contact ID'] == int(request.form['id']), 'Company ID'] = int(request.form['company_id'])
-    table_df.loc[table_df['Contact ID'] == int(request.form['id']), 'Company'] = request.form['company_name']
-    table_df.loc[table_df['Contact ID'] == int(request.form['id']), 'Email'] = request.form['email']
-    table_df.loc[table_df['Contact ID'] == int(request.form['id']), 'Mobile'] = request.form['mobile']
-    table_df.to_csv("static/resources/contacts.csv", columns = ['Contact ID', 'Name', 'Designation', 'Company ID', 'Company', 'Email', 'Mobile', 'HelpScout ID'], index = False)
-    hs_id = table_df[table_df['Contact ID'] == int(request.form['id'])].values.tolist()[0][7]
+    contacts_col.update_many({'Contact ID' == int(request.form['id'])}, {"$set": {"Name": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']}})
+    reminders_col.update_many({'Contact ID'} == int(request.form['id']), {"$set": {"Cotact": request.form['name']}})
+    log_col.update_many({'Contact ID'} == int(request.form['id']), {"$set": {"Contact": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']}})
+    lists_contacts_col.update_many({'Contact ID'} == int(request.form['id']), {"$set": {"Contact": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']}})
+    hs_id = contacts_col.find_one({'Contact ID' == int(request.form['id'])})['HelpScout ID']
     bearer_token = get_bearer_token()
     headers = {'Authorization': f"Bearer {bearer_token}"}
     name = re.sub(r'\.(?!\s)', '. ', request.form['name'])
@@ -614,14 +688,9 @@ def get_contact_comms(id):
         id = int(id)
         current_dt = datetime.utcnow()
         current_dt = current_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-        table_df = pd.read_csv("static/resources/contacts.csv")
-        name = table_df[table_df['Contact ID'] == id].values.tolist()[0][1]
-        designation = table_df[table_df['Contact ID'] == id].values.tolist()[0][2]
-        company = table_df[table_df['Contact ID'] == id].values.tolist()[0][4]
-        email = table_df[table_df['Contact ID'] == id].values.tolist()[0][5]
-        mobile = table_df[table_df['Contact ID'] == id].values.tolist()[0][6]
-        active_response = get_comms(299086, "email", "modifiedAt", "desc", "active", email)["_embedded"]["conversations"]
-        closed_response = get_comms(299086, "email", "modifiedAt", "desc", "closed", email)["_embedded"]["conversations"]
+        contact = contact_lists_col.find_one({'Contact ID': id})
+        active_response = get_comms(299086, "email", "modifiedAt", "desc", "active", contact['Email'])["_embedded"]["conversations"]
+        closed_response = get_comms(299086, "email", "modifiedAt", "desc", "closed", contact['Email'])["_embedded"]["conversations"]
         active_response_rows_html = ""
         closed_response_rows_html = ""
         if len(active_response) > 0:
@@ -705,7 +774,7 @@ def get_contact_comms(id):
             </table>"""
         else:
             phone_comms_html = "None"
-        return render_template("view_contact_communication.html", id = id, name = name, designation = designation, email = email, mobile = mobile, company = company, active_response_html = active_response_html, closed_response_html = closed_response_html, phone_comms_html = phone_comms_html)
+        return render_template("view_contact_communication.html", id = id, name = contact['Name'], designation = contact['Designation'], email = contact['Email'], mobile = contact['Mobile'], company = contact['Company'], active_response_html = active_response_html, closed_response_html = closed_response_html, phone_comms_html = phone_comms_html)
 
 def get_bearer_token():
     bearer_token = os.getenv('bearer_token')
@@ -757,21 +826,26 @@ def get_comms(mailbox, type, sort_by, sort_order, status, email):
 def add_company():
     name = request.form['name']
     state = request.form['state']
-    website = request.form['website']
+    sector = request.form['sector']
+    employees = request.form['employees']
     status = request.form['status']
-    table_df = pd.read_csv("static/resources/companies.csv")
-    matches = (table_df['Company'].str.strip().str.lower() == name.strip().lower()) | (table_df['Website'].str.strip().str.lower() == website.strip().lower())
-    if len(table_df[matches].values.tolist()) > 0:
+    matches = list(companies_col.find({
+        'Company': {
+            '$regex': f'^{re.escape(name)}$',
+            '$options': 'i'
+        }
+    }))
+    if len(matches) > 0:
         return "Company Already Added"
     else:
-        table_list = table_df.values.tolist()
-        if len(table_list) > 0:
-            id = table_list[-1][0] + 1
-        else:
-            id = 1
-        table_list.append([id, name, state, website, status])
-        table_df = pd.DataFrame(table_list, columns = ['Company ID', 'Company', 'State', 'Website', 'Status'])
-        table_df.to_csv("static/resources/companies.csv", index = False)
+        companies_col.insert_one({
+            "Company ID": companies_col.count_documents({}) + 1,
+            "Company": name,
+            "State": state,
+            "Sector": sector,
+            "Employees": employees,
+            "Status": status
+        })
         return "Company Added Successfully"
 
 @app.route('/add-contact', methods = ['POST'])
@@ -782,40 +856,45 @@ def add_contact():
     company = request.form['company_name']
     email = request.form['email']
     mobile = request.form['mobile']
-    table_df = pd.read_csv("static/resources/contacts.csv")
-    matches = (table_df['Name'].str.strip().str.lower() == name.strip().lower()) | (table_df['Email'].str.strip().str.lower() == email.strip().lower()) | (table_df['Mobile'] == mobile)
-    if len(table_df[matches].values.tolist()) > 0:
+    matches = list(companies_col.find({
+        '$or': [
+            {'Name': {'$regex': f'^{re.escape(name)}$', '$options': 'i'}},
+            {'Email': {'$regex': f'^{re.escape(email)}$', '$options': 'i'}}
+        ]
+    }))
+    if len(matches) > 0:
         return "Contact Already Added"
     else:
-        table_list = table_df.values.tolist()
         hs_id = create_contact(name, mobile, email, designation, company)
-        if len(table_list) > 0:
-            id = table_list[-1][0] + 1
-        else:
-            id = 1
-        table_list.append([id, name, designation, company_id, company, email, mobile, hs_id])
-        table_df = pd.DataFrame(table_list, columns = ['Contact ID', 'Name', 'Designation', 'Company ID', 'Company', 'Email', 'Mobile', 'HelpScout ID'])
-        table_df.to_csv("static/resources/contacts.csv", index = False)
+        contacts_col.insert_one({
+            "Contact ID": contacts_col.count_documents({}) + 1,
+            "Name": name,
+            "Designation": designation,
+            "Company ID": company_id,
+            "Company": company,
+            "Email": email,
+            "Mobile": mobile,
+            "HelpScout ID": hs_id
+        })
         return "Contact Added Successfully"
 
 @app.route('/add-phone-comm/<id>', methods = ['POST'])
 def add_phone_comm(id):
     id = int(id)
-    table_df = pd.read_csv("static/resources/contacts.csv")
-    name = table_df[table_df['Contact ID'] == id].values.tolist()[0][1]
-    table_df = pd.read_csv("static/resources/phone_comms.csv")
+    name = contacts_col.find_one({"Contact ID" == id})['Name']
     start_dt = request.form['start_dt']
     end_dt = request.form['end_dt']
     prods = request.form['prods']
     notes = request.form['notes']
-    table_list = table_df.values.tolist()
-    if len(table_list) > 0:
-        comm_id = table_list[-1][0] + 1
-    else:
-        comm_id = 1
-    table_list.append([comm_id, id, name, start_dt, end_dt, prods, notes])
-    table_df = pd.DataFrame(table_list, columns = ['Comm ID', 'Contact ID', 'Name', 'Start Date & Time', 'End Date & Time', 'Product(s) Pitched', 'Notes'])
-    table_df.to_csv("static/resources/phone_comms.csv", index = False)
+    phone_comms_col.insert_one({
+        "Comm ID": phone_comms_col.count_documents({}) + 1,
+        "Contact ID": id,
+        "Contact": name,
+        "Start Date & Time": start_dt,
+        "End Date & Time": end_dt,
+        "Product(s)": prods,
+        "Notes": notes
+    })
     return "Phone Communication Added Successfully"
 
 @app.route('/meetings')
@@ -825,19 +904,18 @@ def meetings():
     elif session['access_level'] != "admin" and session['access_level'] != "sales":
         abort(403)
     else:
-        table_df = pd.read_csv("static/resources/meetings.csv")
-        table = table_df.values.tolist()
+        table = list(meetings_col.find())
         rows_html = ""
         if len(table) > 0:
             for i in range(len(table)):
                 rows_html += f"""<tr>
-                    <td>{table[i][0]}</td>
-                    <td>{table[i][1]}</td>
-                    <td>{table[i][3]}</td>
-                    <td>{datetime.strptime(table[i][4], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
-                    <td>{datetime.strptime(table[i][5], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
-                    <td>{table[i][6]}</td>
-                    <td>{table[i][7]}</td>
+                    <td>{table[i]['Meeting ID']}</td>
+                    <td>{table[i]['Type']}</td>
+                    <td>{table[i]['Company']}</td>
+                    <td>{datetime.strptime(table[i]['Start Date & Time'], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
+                    <td>{datetime.strptime(table[i]['End Date & Time'], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
+                    <td>{table[i]['Product(s)']}</td>
+                    <td>{table[i]['Notes']}</td>
                 </tr>"""
             table_html = f"""<table class="table table-responsive">
                 <tr>
@@ -864,32 +942,31 @@ def add_meeting():
     end_dt = request.form['end_dt']
     prods = request.form['prods']
     agenda = request.form['agenda']
-    table_df = pd.read_csv("static/resources/meetings.csv")
-    matches = (table_df['Type'] == meeting_type) & (table_df['Company ID'] == company_id) & (table_df['Start Date & Time'] == start_dt) & (table_df['End Date & Time'] == end_dt)
-    if len(table_df[matches].values.tolist()) > 0:
+    matches = list(companies_col.find({
+        '$and': [
+            {'Type': meeting_type},
+            {'Company ID': company_id},
+            {'Start Date & Time': start_dt},
+            {'End Date & Time': end_dt}
+        ]
+    }))
+    if len(matches) > 0:
         return "Meeting Already Added"
     else:
-        table_list = table_df.values.tolist()
-        if len(table_list) > 0:
-            id = table_list[-1][0] + 1
-        else:
-            id = 1
-        table_list.append([id, meeting_type, company_id, company, start_dt, end_dt, prods, agenda])
-        table_df = pd.DataFrame(table_list, columns = ['Meeting ID', 'Type', 'Company ID', 'Company', 'Start Date & Time', 'End Date & Time', 'Product(s) Pitched', 'Agenda'])
-        table_df.to_csv("static/resources/meetings.csv", index = False)
+        meetings_col.insert_one({
+            'Type': meeting_type,
+            'Company ID': company_id,
+            'Company': company,
+            'Start Date & Time': start_dt,
+            'End Date & Time': end_dt,
+            'Product(s)': prods,
+            'Agenda': agenda
+        })
         return "Meeting Added Successfully"
     
 @app.route('/process-meeting-change', methods = ['POST'])
 def process_meeting_change():
-    table_df = table_df = pd.read_csv("static/resources/meetings.csv")
-    table_df.loc[table_df['Meeting ID'] == int(request.form['id']), 'Type'] = request.form['meeting_type']
-    table_df.loc[table_df['Meeting ID'] == int(request.form['id']), 'Company ID'] = int(request.form['company_id'])
-    table_df.loc[table_df['Meeting ID'] == int(request.form['id']), 'Company'] = request.form['company_name']
-    table_df.loc[table_df['Meeting ID'] == int(request.form['id']), 'Start Date & Time'] = request.form['start_dt']
-    table_df.loc[table_df['Meeting ID'] == int(request.form['id']), 'End Date & Time'] = request.form['end_dt']
-    table_df.loc[table_df['Meeting ID'] == int(request.form['id']), 'Product(s) Pitched'] = request.form['prods']
-    table_df.loc[table_df['Meeting ID'] == int(request.form['id']), 'Agenda'] = request.form['agenda']
-    table_df.to_csv("static/resources/meetings.csv", columns = ['Meeting ID', 'Type', 'Company ID', 'Company', 'Start Date & Time', 'End Date & Time', 'Product(s) Pitched', 'Agenda'], index = False)
+    meetings_col.update_one({'Meeting ID'} == int(request.form['id']), {"$set": {"Type": request.form['meeting_type'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Start Date & Time": request.form['start_dt'], "Due Date & Time": request.form['end_dt'], "Product(s)": request.form['prods'], "Agenda": request.form['agenda']}})
     return "Meeting Change Processed Successfully"
 
 def create_contact(name, mobile, email, designation, company):
@@ -954,19 +1031,17 @@ def reminders():
     elif session['access_level'] != "admin" and session['access_level'] != "sales":
         abort(403)
     else:
-        table_df = pd.read_csv("static/resources/reminders.csv")
-        table_df = table_df[table_df['Show'] == True].sort_values('Due Date & Time')
-        table = table_df.values.tolist()
+        table = list(reminders_col.find({'Show': True})).sort('Due Date & Time')
         rows_html = ""
         if len(table) > 0:
             for i in range(len(table)):
                 rows_html += f"""<tr>
-                    <td><input id="reminder_check_{table[i][0]}" onchange="check_reminder({table[i][0]})" type="checkbox"></td>
-                    <td>{table[i][1]}</td>
-                    <td>{table[i][3]}</td>
-                    <td>{table[i][5]}</td>
-                    <td>{table[i][6]}</td>
-                    <td>{datetime.strptime(table[i][7], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
+                    <td><input id="reminder_check_{table[i]['Reminder ID']}" onchange="check_reminder({table[i]['Reminder ID']})" type="checkbox"></td>
+                    <td>{table[i]['Reminder']}</td>
+                    <td>{table[i]['Company']}</td>
+                    <td>{table[i]['Contact']}</td>
+                    <td>{table[i]['Recurrence']}</td>
+                    <td>{datetime.strptime(table[i]['Due Date & Time'], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
                 </tr>"""
             table_html = f"""<table class="table table-responsive">
                 <tr>
@@ -1010,51 +1085,280 @@ def get_reminder_entries(reminder, start_date, end_date, recurrence, time, compa
     elif recurrence == 'Monthly':
         freq = MONTHLY
     dates = list(rrule(freq, dtstart = start_date, until = end_date, interval = 1))
-    table_df = pd.read_csv("static/resources/reminders.csv")
     for entry in dates:
-        matches = (table_df['Reminder'].str.strip().str.lower() == reminder.strip().lower()) & (table_df['Due Date & Time'] == entry)
-        if len(table_df[matches].values.tolist()) == 0:
-            table_list = table_df.values.tolist()
-            if len(table_list) > 0:
-                id = table_list[-1][0] + 1
-            else:
-                id = 1
+        matches = list(reminders_col.find({
+            '$and': [
+                {'Reminder': {'$regex': f'^{re.escape(reminder)}$', '$options': 'i'}},
+                {'Due Date & Time': entry}
+            ]
+        }))
+        if len(matches) == 0:
             due_dt = datetime.combine(entry, time)
             due_dt = due_dt.strftime("%Y-%m-%dT%H:%M")
-            table_list.append([id, reminder, company_id, company, contact_id, contact, recurrence, due_dt, True])
-            table_df = pd.DataFrame(table_list, columns = ['Reminder ID', 'Reminder', 'Company ID', 'Company', 'Contact ID', 'Contact', 'Recurrence', 'Due Date & Time', 'Show'])
-            table_df.to_csv("static/resources/reminders.csv", index = False)
+            reminders_col.insert_one({
+                'Reminder ID': reminders_col.count_documents({}) + 1,
+                'Reminder': reminder,
+                'Company ID': company_id,
+                'Company': company,
+                'Contact ID': contact_id,
+                'Contact': contact,
+                'Recurrence': recurrence,
+                'Due Date & Time': due_dt,
+                'Show': True
+            })
     return None
 
 @app.route('/check-reminder', methods = ['POST'])
 def check_reminder():
     id = int(request.form['id'])
-    table_df = pd.read_csv("static/resources/reminders.csv")
-    table_df.loc[table_df['Reminder ID'] == id, 'Show'] = False
-    table_df.to_csv("static/resources/reminders.csv", columns = ["Reminder ID", "Reminder", "Company ID", "Company", "Contact ID", "Contact", "Recurrence", "Due Date & Time", "Show"], index = False)
+    reminders_col.update_one({'Reminder ID': id}, {"$set": {
+        'Show': False
+    }})
     return "Reminder Checked"
+
+@app.route('/contact-lists', methods = ['GET', 'POST'])
+def contact_lists():
+    if 'login_email' not in session or 'login_pwd' not in session:
+        return redirect(url_for("login"))
+    elif session['access_level'] != "admin" and session['access_level'] != "sales":
+        abort(403)
+    else:
+        table = list(contacts_col.find())
+        if len(table) != 0:
+            rows_html = ""
+            for i in range(len(table)):
+                rows_html += f"""<tr>
+                    <td><input id="list_contact_{table[i]['Contact ID']}" type="checkbox" value="{table[i]['Contact ID']}"></td>
+                    <td>{table[i]['Name']}</td>
+                    <td>{table[i]['Designation']}</td>
+                    <td>{table[i]['Company']}</td>
+                    <td>{table[i]['Email']}</td>
+                    <td>{table[i]['Mobile']}</td>
+                </tr>"""
+            table_html = f"""<table class="table table-responsive">
+                <tr>
+                    <th></th>
+                    <th>Name</th>
+                    <th>Designation</th>
+                    <th>Company</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                </tr>
+                {rows_html}
+            </table>"""
+        else:
+            table_html = ""
+        lists_table = list(contact_lists_col.find())
+        if len(lists_table) != 0:    
+            rows_lists_html = ""
+            for i in range(len(lists_table)):
+                rows_lists_html += f"""<tr>
+                    <td>{lists_table[i]['List ID']}</td>
+                    <td>{lists_table[i]['Name']}</td>
+                    <td><a href="/contact-list/{lists_table[i]['List ID']}"><button class="view_button">View</button></a></td>
+                </tr>"""
+            table_lists_html = f"""<table class="table table-responsive">
+                <tr>
+                    <th>S.No.</th>
+                    <th>Name</th>
+                    <th>View</th>
+                </tr>
+                {rows_lists_html}
+            </table>"""
+        else:
+            table_lists_html = ""
+        return render_template("contact_lists.html", list_contacts_html = table_html, lists_table_html = table_lists_html)
+
+@app.route('/add-list', methods = ['POST'])
+def add_list():
+    list_name = request.form['name']
+    list_contacts = request.form.getlist('contacts[]')
+    lists_df = pd.read_csv("static/resources/contact_lists.csv")
+    same_name_found = lists_df['List Name'].str.lower().eq(list_name.lower()).any()
+    same_name_found = list(contact_lists_col.find({
+        'List Name': {
+            '$regex': f'^{re.escape(list_name)}$',
+            '$options': 'i'  # 'i' option for case-insensitive matching
+        }
+    }))
+    if len(same_name_found) > 0:
+        return "List Already Added"
+    else:
+        contact_lists_col.insert_one({
+            'List ID': contact_lists_col.count_documents({}) + 1,
+            'Name': list_name
+        })
+        for contact in list_contacts:
+            contact_row = contacts_col.find_one({'Contact ID': int(contact)})
+            lists_contacts_col.insert_one({
+                'List ID': contact_lists_col.count_documents({}) + 1,
+                'Name': list_name,
+                'Contact ID': contact_row['Contact ID'],
+                'Contact': contact_row['Contact'],
+                'Designation': contact_row['Designation'],
+                'Company ID': contact_row['Company ID'],
+                'Company': contact_row['Company'],
+                'Email': contact_row['Email'],
+                'Mobile': contact_row['Mobile'],
+                'HelpScout ID': contact_row['HelpScout ID']
+            })
+        return "List Added Successfully"
+
+@app.route('/contact-list/<id>', methods = ['GET', 'POST'])
+def view_contact_list(id):
+    if 'login_email' not in session or 'login_pwd' not in session:
+        return redirect(url_for("login"))
+    elif session['access_level'] != "admin" and session['access_level'] != "sales":
+        abort(403)
+    else:
+        table = list(lists_contacts_col.find({'List ID': int(id)}))
+        if len(table) != 0:
+            rows_html = ""
+            for i in range(len(table)):
+                rows_html += f"""<tr>
+                    <td>{i + 1}</td>
+                    <td>{table[i]['Contact']}</td>
+                    <td>{table[i]['Designation']}</td>
+                    <td>{table[i]['Company']}</td>
+                    <td>{table[i]['Email']}</td>
+                    <td>{table[i]['Mobile']}</td>
+                </tr>"""
+            table_html = f"""<table class="table table-responsive">
+                <tr>
+                    <th>S.No.</th>
+                    <th>Contact Name</th>
+                    <th>Designation</th>
+                    <th>Company</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                </tr>
+                {rows_html}
+            </table>"""
+            
+        else:
+            table_html = ""
+        return render_template("view_contact_list.html", table_html = table_html, list_name = lists_contacts_col.find_one({'List ID': int(id)})['Name'], list_id = int(id))
+
+@app.route('/edit-list/<id>', methods = ['GET', 'POST'])
+def edit_list(id):
+    if 'login_email' not in session or 'login_pwd' not in session:
+        return redirect(url_for("login"))
+    elif session['access_level'] != "admin" and session['access_level'] != "sales":
+        abort(403)
+    else:
+        contacts_list = list(contacts_col.find())
+        list_name = contact_lists_col.find_one({'List ID': int(id)})['Name']
+        list_contacts = lists_contacts_col.distinct('Contact ID', {'List ID': int(id)})
+        if len(contacts_list) != 0:
+            rows_edit_html = ""
+            for i in range(len(contacts_list)):
+                rows_edit_html += f"""<tr>
+                    <td><input id="edit_list_contact_{contacts_list[i]['Contact ID']}" value={contacts_list[i]['Contact ID']} type="checkbox"{" checked" if contacts_list[i]['Contact ID'] in list_contacts else ""}></td>
+                    <td>{contacts_list[i]['Contact']}</td>
+                    <td>{contacts_list[i]['Designation']}</td>
+                    <td>{contacts_list[i]['Company']}</td>
+                    <td>{contacts_list[i]['Email']}</td>
+                    <td>{contacts_list[i]['Mobile']}</td>
+                </tr>"""
+            table_edit_html = f"""<table class="table table-responsive">
+                <tr>
+                    <th></th>
+                    <th>Name</th>
+                    <th>Designation</th>
+                    <th>Company</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                </tr>
+                {rows_edit_html}
+            </table>"""
+        else:
+            table_edit_html = ""
+        return render_template("edit_contact_list.html", list_id = id, list_name = list_name, table_edit_html = table_edit_html)
+
+@app.route('/save-edit-list', methods = ['POST'])
+def save_edit_list():
+    list_id = int(request.form['id'])
+    list_name = request.form['name']
+    list_contacts = request.form.getlist("contacts[]")
+    if len(list(contact_lists_col.find({'Name': list_name}))) > 0:
+        return "List Already Added"
+    else:
+        contact_lists_col.update_one({'List ID': list_id}, {"$set": {"Name": list_name}})
+        lists_contacts_col.delete_many({'List ID': list_id})
+        for contact in list_contacts:
+            contact_row = contacts_col.find_one({'Contact ID': int(contact)})
+            lists_contacts_col.insert_one({
+                'List ID': list_id,
+                'Name': list_name,
+                'Contact ID': int(contact),
+                'Contact': contact_row['Name'],
+                'Desigation': contact_row['Designation'],
+                'Company ID': contact_row['Company ID'],
+                'Company': contact_row['Company'],
+                'Email': contact_row['Email'],
+                'Mobile': contact_row['Mobile'],
+                'HelpScout ID': contact_row['HelpScout ID']
+            })
+        return "List Edited Successfully"
+
+@app.route('/bulk-email-log', methods = ['GET', 'POST'])
+def bulk_email():
+    if 'login_email' not in session or 'login_pwd' not in session:
+        return redirect(url_for("login"))
+    else:
+        bulk_emails_list = list(bulk_emails_col.find())
+        if len(bulk_emails_list) != 0:
+            rows_html = ""
+            for row in bulk_emails_list:
+                if row['Sent Status'] == "No":
+                    sent_status = f"""<button class="edit_button" id="send_log_button_{row['Log ID']}" type="button" onclick="send_log({row['Log ID']}, send_log_button_{row['Log ID']})">Send</button>"""
+                elif row['Sent Status'] == "Yes":
+                    sent_status = f"""<button class="disabled_button" id="send_log_button_{row['Log ID']}" type="button" onclick="send_log({row['Log ID']}, send_log_button_{row['Log ID']})" disabled>Sent</button>"""
+                elif row['Sent Status'] == "Partial":
+                    sent_status = f"""<button class="disabled_button" id="send_log_button_{row['Log ID']}" type="button" onclick="send_log({row['Log ID']}, send_log_button_{row['Log ID']})" disabled>Partially Sent</button>"""
+                rows_html += f"""<tr>
+                    <td>{row['Log ID']}</td>
+                    <td>{row['Name']}</td>
+                    <td>{row['Contacts List Name']}</td>
+                    <td>{row['Product']}</td>
+                    <td>{sent_status}</td>
+                </tr>"""
+            table_html = f"""<table class="table table-responsive">
+                <tr>
+                    <th>S.No.</th>
+                    <th>Log Name</th>
+                    <th>Contacts List</th>
+                    <th>Product</th>
+                    <th>Send</th>
+                </tr>
+                {rows_html}
+            </table>"""
+        else:
+            table_html = ""
+        dropdown_options = contact_lists_col.distinct("List ID")
+        dropdown_options_html = ""
+        for option in dropdown_options:
+            dropdown_options_html += f"<option value='{option}'>{contact_lists_col.find_one({'List ID': option})['Name']}</option>"
+        if os.getenv("last_opened_check_dt"):
+            lodt = f"Checked at {os.getenv('ast_opened_check_dt')}"
+        else:
+            lodt = "Not Checked"
+    return render_template("bulk_email.html", access_level = session['access_level'], dropdown_options_html = dropdown_options_html, table_html = table_html, lodt = lodt)
 
 @app.route('/send-log', methods = ['GET', 'POST'])
 def send_log():
     log_id = int(request.form['id'])
-    logs_df = pd.read_csv("static/resources/bulk_emails.csv")
-    log_row = logs_df[logs_df['Log ID'] == log_id].values.tolist()[0]
-    log_name = log_row[1]
-    contacts_list_id = log_row[2]
-    contacts_list_name = log_row[3]
-    prod = log_row[4]
-    contacts_to_send = pd.read_csv(f"static/resources/contact_lists/{contacts_list_name}.csv").values.tolist()
+    log_row = log_col.find_one({'Log ID': log_id})
+    contacts_to_send = list(lists_contacts_col.find({"Contacts List ID": log_row['Contacts List ID']}))
     bearer_token = get_bearer_token()
     headers = {'Authorization': f"Bearer {bearer_token}"}
     if len(contacts_to_send) != 0:
         session['email_stopped_at'] = "Not started yet"
         try:
             for contact in contacts_to_send:
-                bulk_email_df = pd.read_csv("static/resources/bulk_emails_log.csv")
-                bulk_email_list = bulk_email_df.values.tolist()
-                if prod == "YGROO.TRAINING":
-                    subject = f"Revolutionize L&D with AI-Powered L&DaaS at {contact[6]}"
-                    text = f"""Dear {contact[3]},
+                if log_row['Product'] == "YGROO.TRAINING":
+                    subject = f"Revolutionize L&D with AI-Powered L&DaaS at {contact['Company']}"
+                    text = f"""Dear {contact['Contact']},
                     <br><br>
                     I hope this email finds you well.
                     <br><br>
@@ -1094,9 +1398,9 @@ def send_log():
                     Thank you,
                     <br>
                     Kishore Kumar"""
-                elif prod == "YGROO.ART":
-                    subject = f"Revolutionalise Talent Aqcuisition at {contact[6]} with our AI-Driven Solution"
-                    text = f"""Dear {contact[3]},
+                elif log_row['Product'] == "YGROO.ART":
+                    subject = f"Revolutionalise Talent Aqcuisition at {contact['Company']} with our AI-Driven Solution"
+                    text = f"""Dear {contact['Contact']},
                     <br><br>
                     I hope this email finds you well.
                     <br><br>
@@ -1158,315 +1462,96 @@ def send_log():
                     "mailboxId": 299086,
                     "status": "active",
                     "customer": {
-                        "id": contact[9]
+                        "id": contact['HelpScout ID']
                     },
                     "threads": [
                         {
                             "type": "reply",
                             "customer": {
-                                "id": contact[9]
+                                "id": contact['HelpScout ID']
                             },
                             "text": text
                         }
                     ],
-                    "tags": [log_name.lower(), contacts_list_name.lower(), prod.lower()]
+                    "tags": [log_row['Name'].lower(), log_row['Contacts List Name'].lower(), log_row['Product'].lower()]
                 }
                 response = requests.post("https://api.helpscout.net/v2/conversations", headers = headers, json = body)
                 conv_id = response.headers['Resource-ID']
                 conv_date_sent = response.headers['Date']
-                bulk_email_list.append([log_id, log_name, contacts_list_id, contacts_list_name, contact[2], contact[3], contact[4], contact[5], contact[6], prod, pytz.utc.localize(datetime.strptime(conv_date_sent, '%a, %d %b %Y %H:%M:%S %Z')).astimezone(pytz.timezone('Asia/Kolkata')), conv_id, "No", "Not Opened"])
+                log_col.insert_one({
+                    'Log ID': log_id,
+                    'Name': log_row['Name'],
+                    'Contacts List ID': log_row['Contacts List ID'],
+                    'Contacts List Name': log_row['Contacts List Name'],
+                    'Contact ID': log_row['Contact ID'],
+                    'Contact': log_row['Contact'],
+                    'Designation': log_row['Designation'],
+                    'Company ID': log_row['Company ID'],
+                    'Company': log_row['Company'],
+                    'Email': log_row['Email'],
+                    'Mobile': log_row['Mobile'],
+                    'Product': log_row['Product'],
+                    'Date & Time Sent': pytz.utc.localize(datetime.strptime(conv_date_sent, '%a, %d %b %Y %H:%M:%S %Z')).astimezone(pytz.timezone('Asia/Kolkata')),
+                    'HelpScout ID': conv_id,
+                    'Opened Status': "No",
+                    'Opened Date & Time': "Not Opened"
+                })
                 session['email_stopped_at'] = contact[7]
-                bulk_email_df_new = pd.DataFrame(bulk_email_list, columns = ['Log ID', 'Log Name', 'Contacts List ID', 'Contacts List Name', 'Contact ID', 'Contact Name', 'Designation', 'Company ID', 'Company Name', 'Product', 'Date Sent', 'HelpScout ID', 'Opened Status', 'Opened Date & Time'])
-                bulk_email_df_new.to_csv("static/resources/bulk_emails_log.csv", index = False)
-            record_sent_status = pd.read_csv("static/resources/bulk_emails.csv")
-            record_sent_status.loc[record_sent_status['Log ID'] == log_id, 'Sent Status'] = "Yes"
-            record_sent_status.to_csv("static/resources/bulk_emails.csv", index = False)
+            bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Yes"}})
             return "Bulk Emails Sent Out Successfully"
         except:
             print("Log ID:", log_id)
             print("Email Stopped At:", session['email_stopped_at'])
-            record_sent_status = pd.read_csv("static/resources/bulk_emails.csv")
-            record_sent_status.loc[record_sent_status['Log ID'] == log_id, 'Sent Status'] = "Partial"
-            record_sent_status.to_csv("static/resources/bulk_emails.csv", index = False)
+            bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Partial"}})
             return "Stopped at", session['email_stopped_at']
     else:
         return "No Contacts in List"
-
-@app.route('/contact-lists', methods = ['GET', 'POST'])
-def contact_lists():
-    if 'login_email' not in session or 'login_pwd' not in session:
-        return redirect(url_for("login"))
-    elif session['access_level'] != "admin" and session['access_level'] != "sales":
-        abort(403)
-    else:
-        table = pd.read_csv("static/resources/contacts.csv").values.tolist()
-        if len(table) != 0:
-            rows_html = ""
-            for i in range(len(table)):
-                rows_html += f"""<tr>
-                    <td><input id="list_contact_{table[i][0]}" type="checkbox" value="{table[i][0]}"></td>
-                    <td>{table[i][1]}</td>
-                    <td>{table[i][2]}</td>
-                    <td>{table[i][4]}</td>
-                    <td>{table[i][5]}</td>
-                    <td>{table[i][6]}</td>
-                </tr>"""
-            table_html = f"""<table class="table table-responsive">
-                <tr>
-                    <th></th>
-                    <th>Name</th>
-                    <th>Designation</th>
-                    <th>Company</th>
-                    <th>Email</th>
-                    <th>Mobile</th>
-                </tr>
-                {rows_html}
-            </table>"""
-        else:
-            table_html = ""
-        lists_table = pd.read_csv("static/resources/contact_lists.csv").values.tolist()
-        if len(lists_table) != 0:    
-            rows_lists_html = ""
-            for i in range(len(lists_table)):
-                rows_lists_html += f"""<tr>
-                    <td>{lists_table[i][0]}</td>
-                    <td>{lists_table[i][1]}</td>
-                    <td><a href="/contact-list/{lists_table[i][0]}"><button class="view_button">View</button></a></td>
-                </tr>"""
-            table_lists_html = f"""<table class="table table-responsive">
-                <tr>
-                    <th>S.No.</th>
-                    <th>Name</th>
-                    <th>View</th>
-                </tr>
-                {rows_lists_html}
-            </table>"""
-        else:
-            table_lists_html = ""
-        return render_template("contact_lists.html", list_contacts_html = table_html, lists_table_html = table_lists_html)
-
-@app.route('/add-list', methods = ['POST'])
-def add_list():
-    list_name = request.form['name']
-    list_contacts = request.form.getlist('contacts[]')
-    lists_df = pd.read_csv("static/resources/contact_lists.csv")
-    same_name_found = lists_df['List Name'].str.lower().eq(list_name.lower()).any()
-    if same_name_found:
-        return "List Already Added"
-    else:
-        lists_list = lists_df.values.tolist()
-        lists_list.append([list(lists_df.shape)[0] + 1, list_name])
-        lists_df_new = pd.DataFrame(lists_list, columns = ['List ID', 'List Name'])
-        lists_df_new.to_csv("static/resources/contact_lists.csv", index = False)
-        contacts_df = pd.read_csv("static/resources/contacts.csv")
-        list_to_add = []
-        for contact in list_contacts:
-            contact_row = contacts_df[contacts_df['Contact ID'] == int(contact)].values.tolist()[0]
-            list_to_add.append([list(lists_df.shape)[0] + 1, list_name, contact_row[0], contact_row[1], contact_row[2], contact_row[3], contact_row[4], contact_row[5], contact_row[6], contact_row[7]])
-        list_to_add_df = pd.DataFrame(list_to_add, columns = ['List ID', 'Name', 'Contact ID', 'Contact Name', 'Designation', 'Company ID', 'Company', 'Email', 'Mobile', 'HelpScout ID'])
-        list_to_add_df.to_csv(f"static/resources/contact_lists/{list_name}.csv", index = False)
-        return "List Added Successfully"
-
-@app.route('/contact-list/<id>', methods = ['GET', 'POST'])
-def view_contact_list(id):
-    if 'login_email' not in session or 'login_pwd' not in session:
-        return redirect(url_for("login"))
-    elif session['access_level'] != "admin" and session['access_level'] != "sales":
-        abort(403)
-    else:
-        lists_df = pd.read_csv("static/resources/contact_lists.csv")
-        list_name = list(lists_df[lists_df['List ID'] == int(id)]['List Name'].unique())[0]
-        list_df = pd.read_csv(f"static/resources/contact_lists/{list_name}.csv")
-        table = list_df.values.tolist()
-        if len(table) != 0:
-            rows_html = ""
-            for i in range(len(table)):
-                rows_html += f"""<tr>
-                    <td>{i + 1}</td>
-                    <td>{table[i][3]}</td>
-                    <td>{table[i][4]}</td>
-                    <td>{table[i][6]}</td>
-                    <td>{table[i][7]}</td>
-                    <td>{table[i][8]}</td>
-                </tr>"""
-            table_html = f"""<table class="table table-responsive">
-                <tr>
-                    <th>S.No.</th>
-                    <th>Contact Name</th>
-                    <th>Designation</th>
-                    <th>Company</th>
-                    <th>Email</th>
-                    <th>Mobile</th>
-                </tr>
-                {rows_html}
-            </table>"""
-            
-        else:
-            table_html = ""
-        return render_template("view_contact_list.html", table_html = table_html, list_name = list_name, list_id = int(id))
-
-@app.route('/edit-list/<id>', methods = ['GET', 'POST'])
-def edit_list(id):
-    if 'login_email' not in session or 'login_pwd' not in session:
-        return redirect(url_for("login"))
-    elif session['access_level'] != "admin" and session['access_level'] != "sales":
-        abort(403)
-    else:
-        contacts_df = pd.read_csv("static/resources/contacts.csv")
-        contacts_list = contacts_df.values.tolist()
-        lists_df = pd.read_csv("static/resources/contact_lists.csv")
-        list_name = list(lists_df[lists_df['List ID'] == int(id)]['List Name'].unique())[0]
-        list_contacts = list(pd.read_csv(f"static/resources/contact_lists/{list_name}.csv")['Contact ID'].unique())
-        if len(contacts_list) != 0:
-            rows_edit_html = ""
-            for i in range(len(contacts_list)):
-                rows_edit_html += f"""<tr>
-                    <td><input id="edit_list_contact_{contacts_list[i][0]}" value={contacts_list[i][0]} type="checkbox"{" checked" if contacts_list[i][0] in list_contacts else ""}></td>
-                    <td>{contacts_list[i][1]}</td>
-                    <td>{contacts_list[i][2]}</td>
-                    <td>{contacts_list[i][4]}</td>
-                    <td>{contacts_list[i][5]}</td>
-                    <td>{contacts_list[i][6]}</td>
-                </tr>"""
-            table_edit_html = f"""<table class="table table-responsive">
-                <tr>
-                    <th></th>
-                    <th>Contact Name</th>
-                    <th>Designation</th>
-                    <th>Company</th>
-                    <th>Email</th>
-                    <th>Mobile</th>
-                </tr>
-                {rows_edit_html}
-            </table>"""
-        else:
-            table_edit_html = ""
-        return render_template("edit_contact_list.html", list_id = id, list_name = list_name, table_edit_html = table_edit_html)
-
-@app.route('/save-edit-list', methods = ['POST'])
-def save_edit_list():
-    list_id = int(request.form['id'])
-    list_name = request.form['name']
-    list_contacts = request.form.getlist("contacts[]")
-    lists_df = pd.read_csv("static/resources/contact_lists.csv")
-    if list_name in list(lists_df[lists_df['List ID'] != list_id]['List Name'].unique()):
-        return "List Already Added"
-    else:
-        list_contacts_df = pd.read_csv(f"static/resources/contact_lists/{list_name}.csv")
-        lists_df.loc[lists_df['List ID'] == list_id, 'List Name'] = list_name
-        lists_df.to_csv("static/resources/contact_lists.csv", index = False)
-        list_contacts_df['Name'] = list_name
-        list_contacts_list = []
-        contacts_df = pd.read_csv("static/resources/contacts.csv")
-        for contact in list_contacts:
-            contact_row = contacts_df[contacts_df['Contact ID'] == int(contact)].values.tolist()[0]
-            list_contacts_list.append([list_id, list_name, contact_row[0], contact_row[1], contact_row[2], contact_row[3], contact_row[4], contact_row[5], contact_row[6], contact_row[7]])
-        list_contacts_df_new = pd.DataFrame(list_contacts_list, columns = ['List ID', 'Name', 'Contact ID', 'Contact Name', 'Designation', 'Company ID', 'Company', 'Email', 'Mobile', 'HelpScout ID'])
-        list_contacts_df_new.to_csv(f"static/resources/contact_lists/{list_name}.csv", index = False)
-        return "List Edited Successfully"
-
-@app.route('/bulk-email-log', methods = ['GET', 'POST'])
-def bulk_email():
-    if 'login_email' not in session or 'login_pwd' not in session:
-        return redirect(url_for("login"))
-    else:
-        bulk_emails_list = pd.read_csv("static/resources/bulk_emails.csv").values.tolist()
-        if len(bulk_emails_list) != 0:
-            rows_html = ""
-            for row in bulk_emails_list:
-                if row[5] == "No":
-                    sent_status = f"""<button class="edit_button" id="send_log_button_{row[0]}" type="button" onclick="send_log({row[0]}, send_log_button_{row[0]})">Send</button>"""
-                elif row[5] == "Yes":
-                    sent_status = f"""<button class="disabled_button" id="send_log_button_{row[0]}" type="button" onclick="send_log({row[0]}, send_log_button_{row[0]})" disabled>Sent</button>"""
-                elif row[5] == "Partial":
-                    sent_status = f"""<button class="disabled_button" id="send_log_button_{row[0]}" type="button" onclick="send_log({row[0]}, send_log_button_{row[0]})" disabled>Partially Sent</button>"""
-                rows_html += f"""<tr>
-                    <td>{row[0]}</td>
-                    <td>{row[1]}</td>
-                    <td>{row[3]}</td>
-                    <td>{row[4]}</td>
-                    <td>{sent_status}</td>
-                </tr>"""
-            table_html = f"""<table class="table table-responsive">
-                <tr>
-                    <th>S.No.</th>
-                    <th>Log Name</th>
-                    <th>Contacts List</th>
-                    <th>Product</th>
-                    <th>Send</th>
-                </tr>
-                {rows_html}
-            </table>"""
-        else:
-            table_html = ""
-        dropdown_options = pd.read_csv("static/resources/contact_lists.csv")[['List ID', 'List Name']].values.tolist()
-        dropdown_options_html = ""
-        for option in dropdown_options:
-            dropdown_options_html += f"<option value='{option[0]}'>{option[1]}</option>"
-        if os.getenv("last_opened_check_dt"):
-            lodt = f"Checked at {os.getenv('ast_opened_check_dt')}"
-        else:
-            lodt = "Not Checked"
-    return render_template("bulk_email.html", access_level = session['access_level'], dropdown_options_html = dropdown_options_html, table_html = table_html, lodt = lodt)
 
 @app.route('/bulk-email-opened-status', methods = ['GET', 'POST'])
 def bulk_email_opened_status():
     bearer_token = get_bearer_token()
     headers = {'Authorization': f"Bearer {bearer_token}"}
-    bulk_email_df = pd.read_csv("static/resources/bulk_emails_log.csv")
-    bulk_email_df = bulk_email_df[bulk_email_df['Opened Status'] == "No"]
-    bulk_email_list = bulk_email_df.values.tolist()
+    bulk_email_list = log_col.find({"Opened Status": "No"})
     if len(bulk_email_list) != 0:
         session['check_stopped_at'] = "Not started yet"
         try:
             for row in bulk_email_list:
-                response = requests.get(f"https://api.helpscout.net/v2/conversations/{str(row[11])}?embed=threads", headers = headers)
+                response = requests.get(f"https://api.helpscout.net/v2/conversations/{str(row['HelpScout ID'])}?embed=threads", headers = headers)
                 if "openedAt" in response.json()['_embedded']['threads'][0]:
                     opened_dt = response.json()['_embedded']['threads'][0]['openedAt']
                     opened_dt = datetime.strptime(opened_dt, "%Y-%m-%dT%H:%M:%SZ")
                     opened_dt = opened_dt.replace(tzinfo = timezone.utc).astimezone(timezone(timedelta(hours = 5, minutes = 30)))
-                    row[12] = "Yes"
-                    row[13] = opened_dt
-                    session['check_stopped_at'] = row[9]
-            bulk_email_df_new = pd.DataFrame(bulk_email_list, columns = ['Log ID', 'Log Name', 'Contacts List ID', 'Contacts List Name', 'Contact ID', 'Contact Name', 'Designation', 'Company ID', 'Company Name', 'Product', 'Date Sent', 'HelpScout ID', 'Opened Status', 'Opened Date & Time'])
+                    log_col.update_one({"_id": row['_id']}, {"$set": {"Opened Status": "Yes", "Opened Date & Time": opened_dt}})
+                    session['check_stopped_at'] = row['Email']
             os.environ['last_opened_status_checked'] = str(datetime.now(pytz.timezone('Asia/Kolkata')))
-            print(os.getenv('last_opened_status_checked'))
             os.environ['check_type'] = "complete"
-            bulk_email_df_new.to_csv("static/resources/bulk_emails_log.csv", index = False)
             message = "Opened Status Checked Successfully"
         except Exception as e:
             print(e)
-            bulk_email_df_new = pd.DataFrame(bulk_email_list, columns = ['Log ID', 'Log Name', 'Contacts List ID', 'Contacts List Name', 'Contact ID', 'Contact Name', 'Designation', 'Company ID', 'Company Name', 'Product', 'Date Sent', 'HelpScout ID', 'Opened Status', 'Opened Date & Time'])
             os.environ['last_opened_status_checked'] = str(datetime.now(pytz.timezone('Asia/Kolkata')))
-            print(os.getenv('last_opened_status_checked'))
             os.environ['check_type'] = "partial"
-            bulk_email_df_new.to_csv("static/resources/bulk_emails_log.csv", index = False)
             print("HelpScout ID:", str(row[11]))
             print("Email Stopped At:", session['check_stopped_at'])
             message = f"Stopped at {session['check_stopped_at']}"
     else:
         message = "No Bulk Emails Sent Out"
         os.environ['last_opened_status_checked'] = str(datetime.now(pytz.timezone('Asia/Kolkata')))
-        print(os.getenv('last_opened_status_checked'))
-    log_df = pd.read_csv("static/resources/bulk_emails_log.csv")
-    opened_df = log_df[log_df['Opened Status'] == "Yes"].sort_values('Opened Date & Time', ascending = False)
-    closed_df = log_df[log_df['Opened Status'] == "No"].sort_values('Date Sent', ascending = True)
-    opened_list = opened_df.values.tolist()
-    closed_list = closed_df.values.tolist()
+    opened_list = list(log_col.find({"Opened Status": "Yes"})).sort('Opened Date & Time', reverse = True)
+    closed_list = list(log_col.find({"Opened Status": "No"})).sort("Date & Time Sent")
     opened_rows_html = ""
     closed_rows_html = ""
     if len(opened_list) != 0:
         for i in range(len(opened_list)):
             opened_rows_html += f"""<tr>
                 <td>{i + 1}</td>
-                <td>{opened_list[i][1]}</td>
-                <td>{opened_list[i][3]}</td>
-                <td>{opened_list[i][5]}</td>
-                <td>{opened_list[i][6]}</td>
-                <td>{opened_list[i][8]}</td>
-                <td>{opened_list[i][9]}</td>
-                <td>{str(datetime.strptime(opened_list[i][10], "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
-                <td>{str(datetime.strptime(opened_list[i][13], "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
+                <td>{opened_list[i]['Log Name']}</td>
+                <td>{opened_list[i]['Contacts List Name']}</td>
+                <td>{opened_list[i]['Contact']}</td>
+                <td>{opened_list[i]['Designation']}</td>
+                <td>{opened_list[i]['Company']}</td>
+                <td>{opened_list[i]['Product']}</td>
+                <td>{str(datetime.strptime(opened_list[i]['Date & Time Sent'], "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
+                <td>{str(datetime.strptime(opened_list[i]['Opened Date & Time'], "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
             </tr>"""
         opened_table_html = f"""<table class="table table-responsive">
             <tr>
@@ -1488,13 +1573,13 @@ def bulk_email_opened_status():
         for i in range(len(closed_list)):
             closed_rows_html += f"""<tr>
                 <td>{i + 1}</td>
-                <td>{closed_list[i][1]}</td>
-                <td>{closed_list[i][3]}</td>
-                <td>{closed_list[i][5]}</td>
-                <td>{closed_list[i][6]}</td>
-                <td>{closed_list[i][8]}</td>
-                <td>{closed_list[i][9]}</td>
-                <td>{str(datetime.strptime(opened_list[i][10], "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
+                <td>{closed_list[i]['Log Name']}</td>
+                <td>{closed_list[i]['Contacts List Name']}</td>
+                <td>{closed_list[i]['Contact']}</td>
+                <td>{closed_list[i]['Designation']}</td>
+                <td>{closed_list[i]['Company']}</td>
+                <td>{closed_list[i]['Product']}</td>
+                <td>{str(datetime.strptime(opened_list[i]['Date & Time Sent'], "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
             </tr>"""
         closed_table_html = f"""<table class="table table-responsive">
             <tr>
@@ -1520,15 +1605,23 @@ def add_bulk_email_log():
     product = request.form['product']
     log_list_id = request.form['list_id']
     log_list_name = request.form['list_name']
-    bulk_email_df = pd.read_csv("static/resources/bulk_emails.csv")
-    same_name_found = bulk_email_df['Log Name'].str.lower().eq(log_name.lower()).any()
-    if same_name_found:
+    matches = bulk_emails_col.find({
+        'Name': {
+            '$regex': f'^{re.escape(log_name)}$',
+            '$options': 'i'
+        }
+    })
+    if len(matches) > 0:
         return "Bulk Email Log Already Added"
     else:
-        bulk_email_list = bulk_email_df.values.tolist()
-        bulk_email_list.append([len(bulk_email_list) + 1, log_name, log_list_id, log_list_name, product, "No"])
-        bulk_email_df_new = pd.DataFrame(bulk_email_list, columns = ['Log ID', 'Log Name', 'Contacts List ID', 'Contacts List Name', 'Product', 'Sent Status'])
-        bulk_email_df_new.to_csv("static/resources/bulk_emails.csv", index = False)
+        bulk_emails_col.insert_one({
+            'Log ID': bulk_emails_col.count_documents({}) + 1,
+            'Name': log_name,
+            'Contacts List ID': log_list_id,
+            'Contacts List Name': log_list_name,
+            'Product': product,
+            'Sent Status': "No"
+        })
         return "Bulk Email Log Added Successfully"
 
 @app.route('/login')
