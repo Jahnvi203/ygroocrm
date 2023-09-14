@@ -722,7 +722,7 @@ def get_contact_comms(id):
             id = int(id)
             current_dt = datetime.utcnow()
             current_dt = current_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-            contact = contact_lists_col.find_one({'Contact ID': id})
+            contact = contacts_col.find_one({'Contact ID': id})
             active_response = get_comms(299086, "email", "modifiedAt", "desc", "active", contact['Email'])["_embedded"]["conversations"]
             closed_response = get_comms(299086, "email", "modifiedAt", "desc", "closed", contact['Email'])["_embedded"]["conversations"]
             active_response_rows_html = ""
