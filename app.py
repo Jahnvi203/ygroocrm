@@ -698,7 +698,7 @@ def process_contact_change():
         mobile_id = response.json()['_embedded']['phones'][0]['id']
         requests.put(f"https://api.helpscout.net/v2/customers/{hs_id}/phones/{mobile_id}", headers = headers, json = {
             "type": "mobile",
-            "value": request.form['mobile']
+            "value": str(request.form['mobile'])
         })
         response = requests.get(f"https://api.helpscout.net/v2/customers/{hs_id}/emails", headers = headers)
         email_id = response.json()['_embedded']['emails'][0]['id']
