@@ -11,10 +11,11 @@ from dateutil.rrule import rrule, DAILY, WEEKLY, MONTHLY
 import os
 import time
 import pytz
+from urllib.parse import quote_plus
 
 app = Flask(__name__)
 app.secret_key = os.getenv("app_secret_key")
-app.config['MONGO_URI'] = f'mongodb+srv://Jahnvi203:{os.getenv("mongodb_pwd")}@cluster0.cn63w2k.mongodb.net/?retryWrites=true&w=majority'
+app.config['MONGO_URI'] = f'mongodb+srv://{quote_plus("Jahnvi203")}:{quote_plus(os.getenv("mongodb_pwd"))}@cluster0.cn63w2k.mongodb.net/?retryWrites=true&w=majority'
 mongo = PyMongo(app)
 
 companies_col = mongo.db.companies
