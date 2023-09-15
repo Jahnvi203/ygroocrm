@@ -907,8 +907,8 @@ def add_contact():
         mobile = request.form['mobile']
         matches = list(companies_col.find({
             '$or': [
-                {'Name': {'$regex': f'^{re.escape(name)}$', '$options': 'i'},
-                {'Email': {'$regex': f'^{re.escape(email)}$', '$options': 'i'}
+                {'Name': {'$regex': f'^{re.escape(name)}$', '$options': 'i'}},
+                {'Email': {'$regex': f'^{re.escape(email)}$', '$options': 'i'}}
             ]
         }))
         if len(matches) > 0:
@@ -1170,7 +1170,7 @@ def get_reminder_entries(reminder, start_date, end_date, recurrence, time, compa
         for entry in dates:
             matches = list(reminders_col.find({
                 '$and': [
-                    {'Reminder': {'$regex': f'^{re.escape(reminder)}$', '$options': 'i'},
+                    {'Reminder': {'$regex': f'^{re.escape(reminder)}$', '$options': 'i'}},
                     {'Due Date & Time': entry}
                 ]
             }))
