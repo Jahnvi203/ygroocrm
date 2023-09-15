@@ -1742,7 +1742,7 @@ def add_bulk_email_log():
             bulk_emails_col.insert_one({
                 'Log ID': bulk_emails_col.count_documents({}) + 1,
                 'Name': log_name,
-                'Contacts List ID': log_list_id,
+                'Contacts List ID': int(log_list_id),
                 'Contacts List Name': log_list_name,
                 'Product': product,
                 'Sent Status': "No"
