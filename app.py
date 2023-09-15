@@ -1613,7 +1613,7 @@ def send_log():
                     'Opened Status': "No",
                     'Opened Date & Time': "Not Opened"
                 })
-                session['email_stopped_at'] = contact[7]
+                session['email_stopped_at'] = contact['Email']
             bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Yes"}})
             return "Bulk Emails Sent Out Successfully"
         except Exception as e:
