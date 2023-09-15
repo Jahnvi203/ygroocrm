@@ -724,12 +724,12 @@ def get_contact_comms(id):
             current_dt = datetime.utcnow()
             current_dt = current_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
             contact = contacts_col.find_one({'Contact ID': id})
-            active_response = get_comms(299086, "email", "modifiedAt", "desc", "active", contact['Email'])["_embedded"]
-            closed_response = get_comms(299086, "email", "modifiedAt", "desc", "closed", contact['Email'])["_embedded"]
+            active_response = get_comms(299086, "email", "modifiedAt", "desc", "active", contact['Email'])["_embedded"]["conversations"]
+            closed_response = get_comms(299086, "email", "modifiedAt", "desc", "closed", contact['Email'])["_embedded"]["conversations"]
             active_response_rows_html = ""
             closed_response_rows_html = ""
-            if "conversations" in active_response:
-                for comm in active_response["conversations"]:
+            if len(active_response) > 0:
+                for comm in active_response:
                     if "time" in comm["customerWaitingSince"]:
                         ts_1 = datetime.strptime(comm["customerWaitingSince"]["time"], '%Y-%m-%dT%H:%M:%SZ')
                         ts_2 = datetime.strptime(current_dt, '%Y-%m-%dT%H:%M:%SZ')
@@ -763,8 +763,8 @@ def get_contact_comms(id):
                 </table>"""
             else:
                 active_response_html = "None"
-            if "conversations" in closed_response:
-                for comm in closed_response["conversations"]:
+            if len(closed_response) > 0:
+                for comm in closed_response:
                     closed_response_rows_html += f"""<tr>
                         <td>{comm["subject"]}</td>
                         <td>{comm["preview"]}...</td>
@@ -815,10 +815,13 @@ def get_contact_comms(id):
 def get_bearer_token():
     try:
         bearer_token = bearer_col.find_one({'Key': 'Bearer Token'})['Value']
+        print("Got Bearer Token:", bearer_token)
         bearer_expiry = bearer_col.find_one({'Key': 'Bearer Expiry'})['Value']
+        print("Got Bearer Expiry:", bearer_expiry)
         bearer_expiry_dt = datetime.strptime(bearer_expiry, "%Y-%m-%d %H:%M:%S").replace(tzinfo = timezone.utc)
         current_dt = datetime.now(timezone.utc)
         if current_dt >= bearer_expiry_dt:
+            print("Need New Token")
             url = f"https://api.helpscout.net/v2/oauth2/token?grant_type=client_credentials&client_id={os.getenv('client_id')}&client_secret={os.getenv('client_secret')}"
             response = requests.post(url)
             bearer_token_new = response.json()['access_token']
@@ -852,6 +855,7 @@ def get_bearer_token():
             })
             return bearer_token_new
         else:
+            print("Do NOT Need New Token")
             return bearer_token
     except Exception as e:
         traceback.print_exc()
@@ -864,9 +868,12 @@ def get_comms(mailbox, type, sort_by, sort_order, status, email):
         else:
             url = f'https://api.helpscout.net/v2/conversations?mailbox={mailbox}&type={type}&status={status}&sortField={sort_by}&sortOrder={sort_order}&query=(email:"{email}")'
         bearer_token = get_bearer_token()
+        print("Input Bearer Token:", bearer_token)
         headers = {'Authorization': f"Bearer {bearer_token}"}
         response = requests.get(url, headers = headers)
+        print("Response Headers:", response.headers)
         data = response.json()
+        print("Response Data:", data)
         return data
     except Exception as e:
         traceback.print_exc()
