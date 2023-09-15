@@ -39,8 +39,8 @@ def index():
         abort(403)
     else:
         try:
-            today_dt = datetime.now(timezone(timedelta(hours = 5, minutes = 30)))
-            current_week_dt = datetime.now(timezone(timedelta(hours = 5, minutes = 30))) + timedelta(days = 7)
+            today_dt = datetime.now(timezone(timedelta(hours = 5, minutes = 30))).strftime('%Y-%m-%dT%H:%M:%SZ')
+            current_week_dt = datetime.now(timezone(timedelta(hours = 5, minutes = 30))) + timedelta(days = 7).strftime('%Y-%m-%dT%H:%M:%SZ')
             pending_list = list(reminders_col.find({
                 'Show': True,
                 'Due Date & Time': {'$lt': today_dt}
@@ -815,13 +815,10 @@ def get_contact_comms(id):
 def get_bearer_token():
     try:
         bearer_token = bearer_col.find_one({'Key': 'Bearer Token'})['Value']
-        print("Got Bearer Token:", bearer_token)
         bearer_expiry = bearer_col.find_one({'Key': 'Bearer Expiry'})['Value']
-        print("Got Bearer Expiry:", bearer_expiry)
         bearer_expiry_dt = datetime.strptime(bearer_expiry, "%Y-%m-%d %H:%M:%S").replace(tzinfo = timezone.utc)
         current_dt = datetime.now(timezone.utc)
         if current_dt >= bearer_expiry_dt:
-            print("Need New Token")
             url = f"https://api.helpscout.net/v2/oauth2/token?grant_type=client_credentials&client_id={os.getenv('client_id')}&client_secret={os.getenv('client_secret')}"
             response = requests.post(url)
             bearer_token_new = response.json()['access_token']
@@ -855,7 +852,6 @@ def get_bearer_token():
             })
             return bearer_token_new
         else:
-            print("Do NOT Need New Token")
             return bearer_token
     except Exception as e:
         traceback.print_exc()
@@ -868,12 +864,9 @@ def get_comms(mailbox, type, sort_by, sort_order, status, email):
         else:
             url = f'https://api.helpscout.net/v2/conversations?mailbox={mailbox}&type={type}&status={status}&sortField={sort_by}&sortOrder={sort_order}&query=(email:"{email}")'
         bearer_token = get_bearer_token()
-        print("Input Bearer Token:", bearer_token)
         headers = {'Authorization': f"Bearer {bearer_token}"}
         response = requests.get(url, headers = headers)
-        print("Response Headers:", response.headers)
         data = response.json()
-        print("Response Data:", data)
         return data
     except Exception as e:
         traceback.print_exc()
@@ -1473,10 +1466,10 @@ def bulk_email():
 def send_log():
     log_id = int(request.form['id'])
     log_row = bulk_emails_col.find_one({'Log ID': log_id})
-    contacts_to_send = list(lists_contacts_col.find({"List ID": int(log_row['Contacts List ID']})))
+    contacts_to_send = list(lists_contacts_col.find({"List ID": int(log_row['Contacts List ID'])}))
     bearer_token = get_bearer_token()
     headers = {'Authorization': f"Bearer {bearer_token}"}
-    if len(contacts_to_send) != 0:
+    if len(contacts_to_send) > 0:
         session['email_stopped_at'] = "Not started yet"
         try:
             for contact in contacts_to_send:
@@ -1607,13 +1600,13 @@ def send_log():
                     'Name': log_row['Name'],
                     'Contacts List ID': log_row['Contacts List ID'],
                     'Contacts List Name': log_row['Contacts List Name'],
-                    'Contact ID': log_row['Contact ID'],
-                    'Contact': log_row['Contact'],
-                    'Designation': log_row['Designation'],
-                    'Company ID': log_row['Company ID'],
-                    'Company': log_row['Company'],
-                    'Email': log_row['Email'],
-                    'Mobile': log_row['Mobile'],
+                    'Contact ID': contact['Contact ID'],
+                    'Contact': contact['Contact'],
+                    'Designation': contact['Designation'],
+                    'Company ID': contact['Company ID'],
+                    'Company': contact['Company'],
+                    'Email': contact['Email'],
+                    'Mobile': contact['Mobile'],
                     'Product': log_row['Product'],
                     'Date & Time Sent': pytz.utc.localize(datetime.strptime(conv_date_sent, '%a, %d %b %Y %H:%M:%S %Z')).astimezone(pytz.timezone('Asia/Kolkata')),
                     'HelpScout ID': conv_id,
@@ -1627,8 +1620,12 @@ def send_log():
             traceback.print_exc()
             print("Log ID:", log_id)
             print("Email Stopped At:", session['email_stopped_at'])
-            bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Partial"}})
-            return "Stopped at", session['email_stopped_at']
+            if session['email_stopped_at'] == "Not started yet":
+                bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "No"}})
+                return session['email_stopped_at']
+            else:
+                bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Partial"}})
+                return "Stopped at", session['email_stopped_at']
     else:
         return "No Contacts in List"
 
