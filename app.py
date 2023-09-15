@@ -202,51 +202,51 @@ def companies():
                                         </div>
                                         <div class="col-md-9">
                                             <select id="edit_company_state_{table[i]['Company ID']}">
-                                                <option value="Dubai Marina"{{" selected" if {table[i]['State']} == "Dubai Marina" else ""}}>Dubai Marina</option>
-                                                <option value="Mumbai"{{" selected" if {table[i]['State']} == "Mumbai" else ""}}>Mumbai</option>
-                                                <option value="Bengaluru"{{" selected" if {table[i]['State']} == "Bengaluru" else ""}}>Bengaluru</option>
-                                                <option value="Pune"{{" selected" if {table[i]['State']} == "Pune" else ""}}>Pune</option>
-                                                <option value="Morelia"{{" selected" if {table[i]['State']} == "Morelia" else ""}}>Morelia</option>
-                                                <option value="Kolkata"{{" selected" if {table[i]['State']} == "Kolkata" else ""}}>Kolkata</option>
-                                                <option value="Lille"{{" selected" if {table[i]['State']} == "Lille" else ""}}>Lille</option>
-                                                <option value="Delhi"{{" selected" if {table[i]['State']} == "Delhi" else ""}}>Delhi</option>
-                                                <option value="London"{{" selected" if {table[i]['State']} == "London" else ""}}>London</option>
-                                                <option value="Mooresville"{{" selected" if {table[i]['State']} == "Mooresville" else ""}}>Mooresville</option>
-                                                <option value="Seattle"{{" selected" if {table[i]['State']} == "Seattle" else ""}}>Seattle</option>
-                                                <option value="Stockholm"{{" selected" if {table[i]['State']} == "Stockholm" else ""}}>Stockholm</option>
-                                                <option value="Minneapolis"{{" selected" if {table[i]['State']} == "Minneapolis" else ""}}>Minneapolis</option>
-                                                <option value="Chennai"{{" selected" if {table[i]['State']} == "Chennai" else ""}}>Chennai</option>
-                                                <option value="Gurgaon"{{" selected" if {table[i]['State']} == "Gurgaon" else ""}}>Gurgaon</option>
-                                                <option value="Noida"{{" selected" if {table[i]['State']} == "Noida" else ""}}>Noida</option>
-                                                <option value="Abu Dhabi"{{" selected" if {table[i]['State']} == "Abu Dhabi" else ""}}>Abu Dhabi</option>
-                                                <option value="Howrah"{{" selected" if {table[i]['State']} == "Howrah" else ""}}>Howrah</option>
-                                                <option value="New Delhi"{{" selected" if {table[i]['State']} == "New Delhi" else ""}}>New Delhi</option>
-                                                <option value="Gurugram"{{" selected" if {table[i]['State']} == "Gurugram" else ""}}>Gurugram</option>
-                                                <option value="Fremont"{{" selected" if {table[i]['State']} == "Fremont" else ""}}>Fremont</option>
-                                                <option value="Dubai"{{" selected" if {table[i]['State']} == "Dubai" else ""}}>Dubai</option>
-                                                <option value="Jaipur"{{" selected" if {table[i]['State']} == "Jaipur" else ""}}>Jaipur</option>
-                                                <option value="Goa"{{" selected" if {table[i]['State']} == "Goa" else ""}}>Goa</option>
-                                                <option value="Ahmedabad"{{" selected" if {table[i]['State']} == "Ahmedabad" else ""}}>Ahmedabad</option>
-                                                <option value="Kochi"{{" selected" if {table[i]['State']} == "Kochi" else ""}}>Kochi</option>
-                                                <option value="Visakhapatnam"{{" selected" if {table[i]['State']} == "Visakhapatnam" else ""}}>Visakhapatnam</option>
-                                                <option value="Hyderabad"{{" selected" if {table[i]['State']} == "Hyderabad" else ""}}>Hyderabad</option>
-                                                <option value="Coimbatore"{{" selected" if {table[i]['State']} == "Coimbatore" else ""}}>Coimbatore</option>
-                                                <option value="Delhi"{{" selected" if {table[i]['State']} == "Delhi" else ""}}>Delhi</option>
-                                                <option value="Boca Raton"{{" selected" if {table[i]['State']} == "Boca Raton" else ""}}>Boca Raton</option>
-                                                <option value="Tiruppur"{{" selected" if {table[i]['State']} == "Tiruppur" else ""}}>Tiruppur</option>
-                                                <option value="Gandhi Nagar"{{" selected" if {table[i]['State']} == "Gandhi Nagar" else ""}}>Gandhi Nagar</option>
-                                                <option value="Raipur"{{" selected" if {table[i]['State']} == "Raipur" else ""}}>Raipur</option>
-                                                <option value="Alappuzha"{{" selected" if {table[i]['State']} == "Alappuzha" else ""}}>Alappuzha</option>
-                                                <option value="Bhagalpur"{{" selected" if {table[i]['State']} == "Bhagalpur" else ""}}>Bhagalpur</option>
-                                                <option value="Hyderabad"{{" selected" if {table[i]['State']} == "Hyderabad" else ""}}>Hyderabad</option>
-                                                <option value="Manama"{{" selected" if {table[i]['State']} == "Manama" else ""}}>Manama</option>
-                                                <option value="Riyadh"{{" selected" if {table[i]['State']} == "Riyadh" else ""}}>Riyadh</option>
-                                                <option value="San Francisco"{{" selected" if {table[i]['State']} == "San Francisco" else ""}}>San Francisco</option>
-                                                <option value="Delft"{{" selected" if {table[i]['State']} == "Delft" else ""}}>Delft</option>
-                                                <option value="Sambalpur"{{" selected" if {table[i]['State']} == "Sambalpur" else ""}}>Sambalpur</option>
-                                                <option value="Shahjahanpur"{{" selected" if {table[i]['State']} == "Shahjahanpur" else ""}}>Shahjahanpur</option>
-                                                <option value="Navi Mumbai"{{" selected" if {table[i]['State']} == "Navi Mumbai" else ""}}>Navi Mumbai</option>
-                                                <option value="Faridabad"{{" selected" if {table[i]['State']} == "Faridabad" else ""}}>Faridabad</option>
+                                                <option value="Dubai Marina"{" selected" if {table[i]['State']} == "Dubai Marina" else ""}>Dubai Marina</option>
+                                                <option value="Mumbai"{" selected" if {table[i]['State']} == "Mumbai" else ""}>Mumbai</option>
+                                                <option value="Bengaluru"{" selected" if {table[i]['State']} == "Bengaluru" else ""}>Bengaluru</option>
+                                                <option value="Pune"{" selected" if {table[i]['State']} == "Pune" else ""}>Pune</option>
+                                                <option value="Morelia"{" selected" if {table[i]['State']} == "Morelia" else ""}>Morelia</option>
+                                                <option value="Kolkata"{" selected" if {table[i]['State']} == "Kolkata" else ""}>Kolkata</option>
+                                                <option value="Lille"{" selected" if {table[i]['State']} == "Lille" else ""}>Lille</option>
+                                                <option value="Delhi"{" selected" if {table[i]['State']} == "Delhi" else ""}>Delhi</option>
+                                                <option value="London"{" selected" if {table[i]['State']} == "London" else ""}>London</option>
+                                                <option value="Mooresville"{" selected" if {table[i]['State']} == "Mooresville" else ""}>Mooresville</option>
+                                                <option value="Seattle"{" selected" if {table[i]['State']} == "Seattle" else ""}>Seattle</option>
+                                                <option value="Stockholm"{" selected" if {table[i]['State']} == "Stockholm" else ""}>Stockholm</option>
+                                                <option value="Minneapolis"{" selected" if {table[i]['State']} == "Minneapolis" else ""}>Minneapolis</option>
+                                                <option value="Chennai"{" selected" if {table[i]['State']} == "Chennai" else ""}>Chennai</option>
+                                                <option value="Gurgaon"{" selected" if {table[i]['State']} == "Gurgaon" else ""}>Gurgaon</option>
+                                                <option value="Noida"{" selected" if {table[i]['State']} == "Noida" else ""}>Noida</option>
+                                                <option value="Abu Dhabi"{" selected" if {table[i]['State']} == "Abu Dhabi" else ""}>Abu Dhabi</option>
+                                                <option value="Howrah"{" selected" if {table[i]['State']} == "Howrah" else ""}>Howrah</option>
+                                                <option value="New Delhi"{" selected" if {table[i]['State']} == "New Delhi" else ""}>New Delhi</option>
+                                                <option value="Gurugram"{" selected" if {table[i]['State']} == "Gurugram" else ""}>Gurugram</option>
+                                                <option value="Fremont"{" selected" if {table[i]['State']} == "Fremont" else ""}>Fremont</option>
+                                                <option value="Dubai"{" selected" if {table[i]['State']} == "Dubai" else ""}>Dubai</option>
+                                                <option value="Jaipur"{" selected" if {table[i]['State']} == "Jaipur" else ""}>Jaipur</option>
+                                                <option value="Goa"{" selected" if {table[i]['State']} == "Goa" else ""}>Goa</option>
+                                                <option value="Ahmedabad"{" selected" if {table[i]['State']} == "Ahmedabad" else ""}>Ahmedabad</option>
+                                                <option value="Kochi"{" selected" if {table[i]['State']} == "Kochi" else ""}>Kochi</option>
+                                                <option value="Visakhapatnam"{" selected" if {table[i]['State']} == "Visakhapatnam" else ""}>Visakhapatnam</option>
+                                                <option value="Hyderabad"{" selected" if {table[i]['State']} == "Hyderabad" else ""}>Hyderabad</option>
+                                                <option value="Coimbatore"{" selected" if {table[i]['State']} == "Coimbatore" else ""}>Coimbatore</option>
+                                                <option value="Delhi"{" selected" if {table[i]['State']} == "Delhi" else ""}>Delhi</option>
+                                                <option value="Boca Raton"{" selected" if {table[i]['State']} == "Boca Raton" else ""}>Boca Raton</option>
+                                                <option value="Tiruppur"{" selected" if {table[i]['State']} == "Tiruppur" else ""}>Tiruppur</option>
+                                                <option value="Gandhi Nagar"{" selected" if {table[i]['State']} == "Gandhi Nagar" else ""}>Gandhi Nagar</option>
+                                                <option value="Raipur"{" selected" if {table[i]['State']} == "Raipur" else ""}>Raipur</option>
+                                                <option value="Alappuzha"{" selected" if {table[i]['State']} == "Alappuzha" else ""}>Alappuzha</option>
+                                                <option value="Bhagalpur"{" selected" if {table[i]['State']} == "Bhagalpur" else ""}>Bhagalpur</option>
+                                                <option value="Hyderabad"{" selected" if {table[i]['State']} == "Hyderabad" else ""}>Hyderabad</option>
+                                                <option value="Manama"{" selected" if {table[i]['State']} == "Manama" else ""}>Manama</option>
+                                                <option value="Riyadh"{" selected" if {table[i]['State']} == "Riyadh" else ""}>Riyadh</option>
+                                                <option value="San Francisco"{" selected" if {table[i]['State']} == "San Francisco" else ""}>San Francisco</option>
+                                                <option value="Delft"{" selected" if {table[i]['State']} == "Delft" else ""}>Delft</option>
+                                                <option value="Sambalpur"{" selected" if {table[i]['State']} == "Sambalpur" else ""}>Sambalpur</option>
+                                                <option value="Shahjahanpur"{" selected" if {table[i]['State']} == "Shahjahanpur" else ""}>Shahjahanpur</option>
+                                                <option value="Navi Mumbai"{" selected" if {table[i]['State']} == "Navi Mumbai" else ""}>Navi Mumbai</option>
+                                                <option value="Faridabad"{" selected" if {table[i]['State']} == "Faridabad" else ""}>Faridabad</option>
                                             </select>
                                         </div>
                                         <div class="my-2"></div>
@@ -257,26 +257,26 @@ def companies():
                                         </div>
                                         <div class="col-md-9">
                                             <select id="edit_company_sector_{table[i]['Company ID']}">
-                                                <option value="Information Technology"{{" selected" if {table[i]['Sector']} == "Information Technology" else ""}}>Information Technology</option>
-                                                <option value="Healthcare"{{" selected" if {table[i]['Sector']} == "Healthcare" else ""}}>Healthcare</option>
-                                                <option value="Finance"{{" selected" if {table[i]['Sector']} == "Finance" else ""}}>Finance</option>
-                                                <option value="Education"{{" selected" if {table[i]['Sector']} == "Education" else ""}}>Education</option>
-                                                <option value="Manufacturing"{{" selected" if {table[i]['Sector']} == "Manufacturing" else ""}}>Manufacturing</option>
-                                                <option value="Retail"{{" selected" if {table[i]['Sector']} == "Retail" else ""}}>Retail</option>
-                                                <option value="Telecommunications"{{" selected" if {table[i]['Sector']} == "Telecommunications" else ""}}>Telecommunications</option>
-                                                <option value="Hospitality"{{" selected" if {table[i]['Sector']} == "Hospitality" else ""}}>Hospitality</option>
-                                                <option value="Energy"{{" selected" if {table[i]['Sector']} == "Energy" else ""}}>Energy</option>
-                                                <option value="Transportation"{{" selected" if {table[i]['Sector']} == "Transportation" else ""}}>Transportation</option>
-                                                <option value="Entertainment"{{" selected" if {table[i]['Sector']} == "Entertainment" else ""}}>Entertainment</option>
-                                                <option value="Agriculture"{{" selected" if {table[i]['Sector']} == "Agriculture" else ""}}>Agriculture</option>
-                                                <option value="Construction"{{" selected" if {table[i]['Sector']} == "Construction" else ""}}>Construction</option>
-                                                <option value="Pharmaceuticals"{{" selected" if {table[i]['Sector']} == "Pharmaceuticals" else ""}}>Pharmaceuticals</option>
-                                                <option value="Automotive"{{" selected" if {table[i]['Sector']} == "Automotive" else ""}}>Automotive</option>
-                                                <option value="Media"{{" selected" if {table[i]['Sector']} == "Media" else ""}}>Media</option>
-                                                <option value="Real Estate"{{" selected" if {table[i]['Sector']} == "Real Estate" else ""}}>Real Estate</option>
-                                                <option value="Aerospace"{{" selected" if {table[i]['Sector']} == "Aerospace" else ""}}>Aerospace</option>
-                                                <option value="Environmental"{{" selected" if {table[i]['Sector']} == "Environmental" else ""}}>Environmental</option>
-                                                <option value="Government"{{" selected" if {table[i]['Sector']} == "Government" else ""}}>Government</option>
+                                                <option value="Information Technology"{" selected" if {table[i]['Sector']} == "Information Technology" else ""}>Information Technology</option>
+                                                <option value="Healthcare"{" selected" if {table[i]['Sector']} == "Healthcare" else ""}>Healthcare</option>
+                                                <option value="Finance"{" selected" if {table[i]['Sector']} == "Finance" else ""}>Finance</option>
+                                                <option value="Education"{" selected" if {table[i]['Sector']} == "Education" else ""}>Education</option>
+                                                <option value="Manufacturing"{" selected" if {table[i]['Sector']} == "Manufacturing" else ""}>Manufacturing</option>
+                                                <option value="Retail"{" selected" if {table[i]['Sector']} == "Retail" else ""}>Retail</option>
+                                                <option value="Telecommunications"{" selected" if {table[i]['Sector']} == "Telecommunications" else ""}>Telecommunications</option>
+                                                <option value="Hospitality"{" selected" if {table[i]['Sector']} == "Hospitality" else ""}>Hospitality</option>
+                                                <option value="Energy"{" selected" if {table[i]['Sector']} == "Energy" else ""}>Energy</option>
+                                                <option value="Transportation"{" selected" if {table[i]['Sector']} == "Transportation" else ""}>Transportation</option>
+                                                <option value="Entertainment"{" selected" if {table[i]['Sector']} == "Entertainment" else ""}>Entertainment</option>
+                                                <option value="Agriculture"{" selected" if {table[i]['Sector']} == "Agriculture" else ""}>Agriculture</option>
+                                                <option value="Construction"{" selected" if {table[i]['Sector']} == "Construction" else ""}>Construction</option>
+                                                <option value="Pharmaceuticals"{" selected" if {table[i]['Sector']} == "Pharmaceuticals" else ""}>Pharmaceuticals</option>
+                                                <option value="Automotive"{" selected" if {table[i]['Sector']} == "Automotive" else ""}>Automotive</option>
+                                                <option value="Media"{" selected" if {table[i]['Sector']} == "Media" else ""}>Media</option>
+                                                <option value="Real Estate"{" selected" if {table[i]['Sector']} == "Real Estate" else ""}>Real Estate</option>
+                                                <option value="Aerospace"{" selected" if {table[i]['Sector']} == "Aerospace" else ""}>Aerospace</option>
+                                                <option value="Environmental"{" selected" if {table[i]['Sector']} == "Environmental" else ""}>Environmental</option>
+                                                <option value="Government"{" selected" if {table[i]['Sector']} == "Government" else ""}>Government</option>
                                             </select>
                                         </div>
                                         <div class="my-2"></div>
@@ -369,7 +369,7 @@ def process_status_change():
     try:
         company_id = int(request.form['company_id'])
         new_status = request.form['new_status']
-        companies_col.update_one({'Company ID': company_id}, {"$set": {'Status': new_status}})
+        companies_col.update_one({'Company ID': company_id}, {"$set": {'Status': new_status})
         return "Status Change Processed Successfully"
     except Exception as e:
         traceback.print_exc()
@@ -643,12 +643,12 @@ def view_company(id):
 @app.route('/process-company-change', methods = ['POST'])
 def process_company_change():
     try:
-        companies_col.update_one({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name'], "State": request.form['state'], "Sector": request.form['sector'], "Employees": request.form['employees']}})
-        contacts_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
-        meetings_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
-        reminders_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
-        log_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
-        lists_contacts_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
+        companies_col.update_one({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name'], "State": request.form['state'], "Sector": request.form['sector'], "Employees": request.form['employees']})
+        contacts_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']})
+        meetings_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']})
+        reminders_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']})
+        log_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']})
+        lists_contacts_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']})
         bearer_token = get_bearer_token()
         headers = {'Authorization': f"Bearer {bearer_token}"}
         for contact in contacts_col.find({'Company ID': int(request.form['id'])}):
@@ -666,10 +666,10 @@ def process_company_change():
 @app.route('/process-contact-change', methods = ['POST'])
 def process_contact_change():
     try:
-        contacts_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Name": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']}})
-        reminders_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Cotact": request.form['name']}})
-        log_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Contact": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']}})
-        lists_contacts_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Contact": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']}})
+        contacts_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Name": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']})
+        reminders_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Cotact": request.form['name']})
+        log_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Contact": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']})
+        lists_contacts_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Contact": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']})
         hs_id = contacts_col.find_one({'Contact ID': int(request.form['id'])})['HelpScout ID']
         bearer_token = get_bearer_token()
         headers = {'Authorization': f"Bearer {bearer_token}"}
@@ -842,8 +842,8 @@ def get_bearer_token():
                 }
             ]
             requests.put(render_url, json = payload, headers = headers)
-            bearer_col.update_one({'Key': 'Bearer Token'}, {"$set": {"Value": bearer_token_new}})
-            bearer_col.update_one({'Key': 'Bearer Expiry'}, {"$set": {"Value": bearer_expiry_new}})
+            bearer_col.update_one({'Key': 'Bearer Token'}, {"$set": {"Value": bearer_token_new})
+            bearer_col.update_one({'Key': 'Bearer Expiry'}, {"$set": {"Value": bearer_expiry_new})
             return bearer_token_new
         else:
             return bearer_token
@@ -907,8 +907,8 @@ def add_contact():
         mobile = request.form['mobile']
         matches = list(companies_col.find({
             '$or': [
-                {'Name': {'$regex': f'^{re.escape(name)}$', '$options': 'i'}},
-                {'Email': {'$regex': f'^{re.escape(email)}$', '$options': 'i'}}
+                {'Name': {'$regex': f'^{re.escape(name)}$', '$options': 'i'},
+                {'Email': {'$regex': f'^{re.escape(email)}$', '$options': 'i'}
             ]
         }))
         if len(matches) > 0:
@@ -1032,7 +1032,7 @@ def add_meeting():
 @app.route('/process-meeting-change', methods = ['POST'])
 def process_meeting_change():
     try:
-        meetings_col.update_one({'Meeting ID'} == int(request.form['id']), {"$set": {"Type": request.form['meeting_type'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Start Date & Time": request.form['start_dt'], "Due Date & Time": request.form['end_dt'], "Product(s)": request.form['prods'], "Agenda": request.form['agenda']}})
+        meetings_col.update_one({'Meeting ID'} == int(request.form['id']), {"$set": {"Type": request.form['meeting_type'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Start Date & Time": request.form['start_dt'], "Due Date & Time": request.form['end_dt'], "Product(s)": request.form['prods'], "Agenda": request.form['agenda']})
         return "Meeting Change Processed Successfully"
     except Exception as e:
         traceback.print_exc()
@@ -1170,7 +1170,7 @@ def get_reminder_entries(reminder, start_date, end_date, recurrence, time, compa
         for entry in dates:
             matches = list(reminders_col.find({
                 '$and': [
-                    {'Reminder': {'$regex': f'^{re.escape(reminder)}$', '$options': 'i'}},
+                    {'Reminder': {'$regex': f'^{re.escape(reminder)}$', '$options': 'i'},
                     {'Due Date & Time': entry}
                 ]
             }))
@@ -1199,7 +1199,7 @@ def check_reminder():
         id = int(request.form['id'])
         reminders_col.update_one({'Reminder ID': id}, {"$set": {
             'Show': False
-        }})
+        })
         return "Reminder Checked Successfully"
     except Exception as e:
         traceback.print_exc()
@@ -1387,7 +1387,7 @@ def save_edit_list():
         return "List Already Added"
     else:
         try:
-            contact_lists_col.update_one({'List ID': list_id}, {"$set": {"Name": list_name}})
+            contact_lists_col.update_one({'List ID': list_id}, {"$set": {"Name": list_name})
             lists_contacts_col.delete_many({'List ID': list_id})
             for contact in list_contacts:
                 contact_row = contacts_col.find_one({'Contact ID': int(contact)})
@@ -1608,17 +1608,17 @@ def send_log():
                     'Opened Date & Time': "Not Opened"
                 })
                 session['email_stopped_at'] = contact['Email']
-            bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Yes"}})
+            bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Yes"})
             return "Bulk Emails Sent Out Successfully"
         except Exception as e:
             traceback.print_exc()
             print("Log ID:", log_id)
             print("Email Stopped At:", session['email_stopped_at'])
             if session['email_stopped_at'] == "Not started yet":
-                bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "No"}})
+                bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "No"})
                 return session['email_stopped_at']
             else:
-                bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Partial"}})
+                bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Partial"})
                 return "Stopped at", session['email_stopped_at']
     else:
         return "No Contacts in List"
@@ -1637,7 +1637,7 @@ def bulk_email_opened_status():
                     opened_dt = response.json()['_embedded']['threads'][0]['openedAt']
                     opened_dt = datetime.strptime(opened_dt, "%Y-%m-%dT%H:%M:%SZ")
                     opened_dt = opened_dt.replace(tzinfo = timezone.utc).astimezone(timezone(timedelta(hours = 5, minutes = 30)))
-                    log_col.update_one({"_id": row['_id']}, {"$set": {"Opened Status": "Yes", "Opened Date & Time": opened_dt}})
+                    log_col.update_one({"_id": row['_id']}, {"$set": {"Opened Status": "Yes", "Opened Date & Time": opened_dt})
                     session['check_stopped_at'] = row['Email']
             last_opened_status_checked = datetime.now(pytz.timezone('Asia/Kolkata'))
             check_type = "complete"
