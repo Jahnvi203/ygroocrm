@@ -1383,7 +1383,10 @@ def save_edit_list():
     list_id = int(request.form['id'])
     list_name = request.form['name']
     list_contacts = request.form.getlist("contacts[]")
-    if len(list(contact_lists_col.find({'Name': list_name}))) > 0:
+    if len(list(contact_lists_col.find({
+        'Name': list_name,
+        'List ID': {'$ne': list_id}
+    }))) > 0:
         return "List Already Added"
     else:
         try:
