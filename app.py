@@ -1635,7 +1635,7 @@ def send_log():
 def bulk_email_opened_status():
     bearer_token = get_bearer_token()
     headers = {'Authorization': f"Bearer {bearer_token}"}
-    bulk_email_list = log_col.find({"Opened Status": "No"})
+    bulk_email_list = list(log_col.find({"Opened Status": "No"}))
     if len(bulk_email_list) != 0:
         session['check_stopped_at'] = "Not started yet"
         try:
