@@ -724,15 +724,12 @@ def get_contact_comms(id):
             current_dt = datetime.utcnow()
             current_dt = current_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
             contact = contacts_col.find_one({'Contact ID': id})
-            print(contact)
-            print(get_comms(299086, "email", "modifiedAt", "desc", "active", contact['Email']))
-            print(get_comms(299086, "email", "modifiedAt", "desc", "closed", contact['Email']))
-            active_response = get_comms(299086, "email", "modifiedAt", "desc", "active", contact['Email'])["_embedded"]["conversations"]
-            closed_response = get_comms(299086, "email", "modifiedAt", "desc", "closed", contact['Email'])["_embedded"]["conversations"]
+            active_response = get_comms(299086, "email", "modifiedAt", "desc", "active", contact['Email'])["_embedded"]
+            closed_response = get_comms(299086, "email", "modifiedAt", "desc", "closed", contact['Email'])["_embedded"]
             active_response_rows_html = ""
             closed_response_rows_html = ""
-            if len(active_response) > 0:
-                for comm in active_response:
+            if "conversations" in active_response:
+                for comm in active_response["conversations"]:
                     if "time" in comm["customerWaitingSince"]:
                         ts_1 = datetime.strptime(comm["customerWaitingSince"]["time"], '%Y-%m-%dT%H:%M:%SZ')
                         ts_2 = datetime.strptime(current_dt, '%Y-%m-%dT%H:%M:%SZ')
@@ -766,8 +763,8 @@ def get_contact_comms(id):
                 </table>"""
             else:
                 active_response_html = "None"
-            if len(closed_response) > 0:
-                for comm in closed_response:
+            if "conversations" in closed_response:
+                for comm in closed_response["conversations"]:
                     closed_response_rows_html += f"""<tr>
                         <td>{comm["subject"]}</td>
                         <td>{comm["preview"]}...</td>
