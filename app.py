@@ -1701,7 +1701,7 @@ def bulk_email_opened_status():
                 <td>{closed_list[i]['Designation']}</td>
                 <td>{closed_list[i]['Company']}</td>
                 <td>{closed_list[i]['Product']}</td>
-                <td>{str(datetime.strptime(opened_list[i]['Date & Time Sent'], "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
+                <td>{str(datetime.strptime(closed_list[i]['Date & Time Sent'], "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
             </tr>"""
         closed_table_html = f"""<table class="table table-responsive">
             <tr>
