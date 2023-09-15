@@ -1354,7 +1354,7 @@ def edit_list(id):
                 for i in range(len(contacts_list)):
                     rows_edit_html += f"""<tr>
                         <td><input id="edit_list_contact_{contacts_list[i]['Contact ID']}" value={contacts_list[i]['Contact ID']} type="checkbox"{" checked" if contacts_list[i]['Contact ID'] in list_contacts else ""}></td>
-                        <td>{contacts_list[i]['Contact']}</td>
+                        <td>{contacts_list[i]['Name']}</td>
                         <td>{contacts_list[i]['Designation']}</td>
                         <td>{contacts_list[i]['Company']}</td>
                         <td>{contacts_list[i]['Email']}</td>
