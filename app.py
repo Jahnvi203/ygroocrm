@@ -1472,7 +1472,7 @@ def bulk_email():
 @app.route('/send-log', methods = ['GET', 'POST'])
 def send_log():
     log_id = int(request.form['id'])
-    log_row = log_col.find_one({'Log ID': log_id})
+    log_row = bulk_emails_col.find_one({'Log ID': log_id})
     contacts_to_send = list(lists_contacts_col.find({"List ID": log_row['Contacts List ID']}))
     bearer_token = get_bearer_token()
     headers = {'Authorization': f"Bearer {bearer_token}"}
