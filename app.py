@@ -1672,8 +1672,8 @@ def bulk_email_opened_status():
                 <td>{opened_list[i]['Designation']}</td>
                 <td>{opened_list[i]['Company']}</td>
                 <td>{opened_list[i]['Product']}</td>
-                <td>{str(datetime.strptime(opened_list[i]['Date & Time Sent'], "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
-                <td>{str(datetime.strptime(opened_list[i]['Opened Date & Time'], "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
+                <td>{str(str(datetime.strptime(opened_list[i]['Date & Time Sent']), "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
+                <td>{str(str(datetime.strptime(opened_list[i]['Opened Date & Time']), "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
             </tr>"""
         opened_table_html = f"""<table class="table table-responsive">
             <tr>
@@ -1701,7 +1701,7 @@ def bulk_email_opened_status():
                 <td>{closed_list[i]['Designation']}</td>
                 <td>{closed_list[i]['Company']}</td>
                 <td>{closed_list[i]['Product']}</td>
-                <td>{str(datetime.strptime(closed_list[i]['Date & Time Sent'], "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
+                <td>{str(str(datetime.strptime(closed_list[i]['Date & Time Sent']), "%Y-%m-%d %H:%M:%S%z").strftime("%d/%m/%Y %I:%M %p"))}</td>
             </tr>"""
         closed_table_html = f"""<table class="table table-responsive">
             <tr>
@@ -1718,7 +1718,7 @@ def bulk_email_opened_status():
         </table>"""
     else:
         closed_table_html = "No unopened emails."
-    last_checked = f"Last checked at {str(datetime.strptime(os.getenv('last_opened_status_checked'), '%Y-%m-%d %H:%M:%S.%f%z').strftime('%d/%m/%Y %I:%M %p'))} ({os.getenv('check_type')})"
+    last_checked = f"Last checked at {str(str(datetime.strptime(os.getenv('last_opened_status_checked')), '%Y-%m-%d %H:%M:%S.%f%z').strftime('%d/%m/%Y %I:%M %p'))} ({os.getenv('check_type')})"
     return render_template("view_bulk_email.html", last_checked = last_checked, opened_table_html = opened_table_html, closed_table_html = closed_table_html, message = message)
 
 @app.route('/add-bulk-email-log', methods = ['GET', 'POST'])
