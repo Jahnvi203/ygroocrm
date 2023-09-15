@@ -1719,7 +1719,6 @@ def bulk_email_opened_status():
         </table>"""
     else:
         closed_table_html = "No unopened emails."
-    last_opened_status_checked = 
     last_checked = f"Last checked at {last_opened_status_checked.strftime('%d/%m/%Y %I:%M %p')} ({check_type)})"
     return render_template("view_bulk_email.html", last_checked = last_checked, opened_table_html = opened_table_html, closed_table_html = closed_table_html, message = message)
 
