@@ -90,6 +90,7 @@
                     success: function() {
                         if (response === "Company Already Added") {
                             alert("Company has already been added");
+                            location.reload();
                         } else if (response === "Company Added Successfully") {
                             alert("Company added successfully")
                         } else {
