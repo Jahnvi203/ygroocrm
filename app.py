@@ -842,14 +842,8 @@ def get_bearer_token():
                 }
             ]
             requests.put(render_url, json = payload, headers = headers)
-            bearer_col.insert_one({
-                'Key': 'Bearer Token',
-                'Value': bearer_token_new
-            })
-            bearer_col.insert_one({
-                'Key': 'Bearer Expiry',
-                'Value': bearer_expiry_new
-            })
+            bearer_col.update_one({'Key': 'Bearer Token'}, {"$set": {"Value": bearer_token_new}})
+            bearer_col.update_one({'Key': 'Bearer Expiry'}, {"$set": {"Value": bearer_expiry_new}})
             return bearer_token_new
         else:
             return bearer_token
