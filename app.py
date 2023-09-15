@@ -1473,7 +1473,7 @@ def bulk_email():
 def send_log():
     log_id = int(request.form['id'])
     log_row = bulk_emails_col.find_one({'Log ID': log_id})
-    contacts_to_send = list(lists_contacts_col.find({"List ID": log_row['Contacts List ID']}))
+    contacts_to_send = list(lists_contacts_col.find({"List ID": int(log_row['Contacts List ID']})))
     bearer_token = get_bearer_token()
     headers = {'Authorization': f"Bearer {bearer_token}"}
     if len(contacts_to_send) != 0:
@@ -1623,7 +1623,8 @@ def send_log():
                 session['email_stopped_at'] = contact[7]
             bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Yes"}})
             return "Bulk Emails Sent Out Successfully"
-        except:
+        except Exception as e:
+            traceback.print_exc()
             print("Log ID:", log_id)
             print("Email Stopped At:", session['email_stopped_at'])
             bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Partial"}})
