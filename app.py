@@ -1399,7 +1399,7 @@ def save_edit_list():
                     'Name': list_name,
                     'Contact ID': int(contact),
                     'Contact': contact_row['Name'],
-                    'Desigation': contact_row['Designation'],
+                    'Designation': contact_row['Designation'],
                     'Company ID': contact_row['Company ID'],
                     'Company': contact_row['Company'],
                     'Email': contact_row['Email'],
