@@ -202,51 +202,51 @@ def companies():
                                         </div>
                                         <div class="col-md-9">
                                             <select id="edit_company_state_{table[i]['Company ID']}">
-                                                <option value="Dubai Marina"{" selected" if {table[i]['State']} == "Dubai Marina" else ""}>Dubai Marina</option>
-                                                <option value="Mumbai"{" selected" if {table[i]['State']} == "Mumbai" else ""}>Mumbai</option>
-                                                <option value="Bengaluru"{" selected" if {table[i]['State']} == "Bengaluru" else ""}>Bengaluru</option>
-                                                <option value="Pune"{" selected" if {table[i]['State']} == "Pune" else ""}>Pune</option>
-                                                <option value="Morelia"{" selected" if {table[i]['State']} == "Morelia" else ""}>Morelia</option>
-                                                <option value="Kolkata"{" selected" if {table[i]['State']} == "Kolkata" else ""}>Kolkata</option>
-                                                <option value="Lille"{" selected" if {table[i]['State']} == "Lille" else ""}>Lille</option>
-                                                <option value="Delhi"{" selected" if {table[i]['State']} == "Delhi" else ""}>Delhi</option>
-                                                <option value="London"{" selected" if {table[i]['State']} == "London" else ""}>London</option>
-                                                <option value="Mooresville"{" selected" if {table[i]['State']} == "Mooresville" else ""}>Mooresville</option>
-                                                <option value="Seattle"{" selected" if {table[i]['State']} == "Seattle" else ""}>Seattle</option>
-                                                <option value="Stockholm"{" selected" if {table[i]['State']} == "Stockholm" else ""}>Stockholm</option>
-                                                <option value="Minneapolis"{" selected" if {table[i]['State']} == "Minneapolis" else ""}>Minneapolis</option>
-                                                <option value="Chennai"{" selected" if {table[i]['State']} == "Chennai" else ""}>Chennai</option>
-                                                <option value="Gurgaon"{" selected" if {table[i]['State']} == "Gurgaon" else ""}>Gurgaon</option>
-                                                <option value="Noida"{" selected" if {table[i]['State']} == "Noida" else ""}>Noida</option>
-                                                <option value="Abu Dhabi"{" selected" if {table[i]['State']} == "Abu Dhabi" else ""}>Abu Dhabi</option>
-                                                <option value="Howrah"{" selected" if {table[i]['State']} == "Howrah" else ""}>Howrah</option>
-                                                <option value="New Delhi"{" selected" if {table[i]['State']} == "New Delhi" else ""}>New Delhi</option>
-                                                <option value="Gurugram"{" selected" if {table[i]['State']} == "Gurugram" else ""}>Gurugram</option>
-                                                <option value="Fremont"{" selected" if {table[i]['State']} == "Fremont" else ""}>Fremont</option>
-                                                <option value="Dubai"{" selected" if {table[i]['State']} == "Dubai" else ""}>Dubai</option>
-                                                <option value="Jaipur"{" selected" if {table[i]['State']} == "Jaipur" else ""}>Jaipur</option>
-                                                <option value="Goa"{" selected" if {table[i]['State']} == "Goa" else ""}>Goa</option>
-                                                <option value="Ahmedabad"{" selected" if {table[i]['State']} == "Ahmedabad" else ""}>Ahmedabad</option>
-                                                <option value="Kochi"{" selected" if {table[i]['State']} == "Kochi" else ""}>Kochi</option>
-                                                <option value="Visakhapatnam"{" selected" if {table[i]['State']} == "Visakhapatnam" else ""}>Visakhapatnam</option>
-                                                <option value="Hyderabad"{" selected" if {table[i]['State']} == "Hyderabad" else ""}>Hyderabad</option>
-                                                <option value="Coimbatore"{" selected" if {table[i]['State']} == "Coimbatore" else ""}>Coimbatore</option>
-                                                <option value="Delhi"{" selected" if {table[i]['State']} == "Delhi" else ""}>Delhi</option>
-                                                <option value="Boca Raton"{" selected" if {table[i]['State']} == "Boca Raton" else ""}>Boca Raton</option>
-                                                <option value="Tiruppur"{" selected" if {table[i]['State']} == "Tiruppur" else ""}>Tiruppur</option>
-                                                <option value="Gandhi Nagar"{" selected" if {table[i]['State']} == "Gandhi Nagar" else ""}>Gandhi Nagar</option>
-                                                <option value="Raipur"{" selected" if {table[i]['State']} == "Raipur" else ""}>Raipur</option>
-                                                <option value="Alappuzha"{" selected" if {table[i]['State']} == "Alappuzha" else ""}>Alappuzha</option>
-                                                <option value="Bhagalpur"{" selected" if {table[i]['State']} == "Bhagalpur" else ""}>Bhagalpur</option>
-                                                <option value="Hyderabad"{" selected" if {table[i]['State']} == "Hyderabad" else ""}>Hyderabad</option>
-                                                <option value="Manama"{" selected" if {table[i]['State']} == "Manama" else ""}>Manama</option>
-                                                <option value="Riyadh"{" selected" if {table[i]['State']} == "Riyadh" else ""}>Riyadh</option>
-                                                <option value="San Francisco"{" selected" if {table[i]['State']} == "San Francisco" else ""}>San Francisco</option>
-                                                <option value="Delft"{" selected" if {table[i]['State']} == "Delft" else ""}>Delft</option>
-                                                <option value="Sambalpur"{" selected" if {table[i]['State']} == "Sambalpur" else ""}>Sambalpur</option>
-                                                <option value="Shahjahanpur"{" selected" if {table[i]['State']} == "Shahjahanpur" else ""}>Shahjahanpur</option>
-                                                <option value="Navi Mumbai"{" selected" if {table[i]['State']} == "Navi Mumbai" else ""}>Navi Mumbai</option>
-                                                <option value="Faridabad"{" selected" if {table[i]['State']} == "Faridabad" else ""}>Faridabad</option>
+                                                <option value="Dubai Marina"{" selected" if table[i]['State'] == "Dubai Marina" else ""}>Dubai Marina</option>
+                                                <option value="Mumbai"{" selected" if table[i]['State'] == "Mumbai" else ""}>Mumbai</option>
+                                                <option value="Bengaluru"{" selected" if table[i]['State'] == "Bengaluru" else ""}>Bengaluru</option>
+                                                <option value="Pune"{" selected" if table[i]['State'] == "Pune" else ""}>Pune</option>
+                                                <option value="Morelia"{" selected" if table[i]['State'] == "Morelia" else ""}>Morelia</option>
+                                                <option value="Kolkata"{" selected" if table[i]['State'] == "Kolkata" else ""}>Kolkata</option>
+                                                <option value="Lille"{" selected" if table[i]['State'] == "Lille" else ""}>Lille</option>
+                                                <option value="Delhi"{" selected" if table[i]['State'] == "Delhi" else ""}>Delhi</option>
+                                                <option value="London"{" selected" if table[i]['State'] == "London" else ""}>London</option>
+                                                <option value="Mooresville"{" selected" if table[i]['State'] == "Mooresville" else ""}>Mooresville</option>
+                                                <option value="Seattle"{" selected" if table[i]['State'] == "Seattle" else ""}>Seattle</option>
+                                                <option value="Stockholm"{" selected" if table[i]['State'] == "Stockholm" else ""}>Stockholm</option>
+                                                <option value="Minneapolis"{" selected" if table[i]['State'] == "Minneapolis" else ""}>Minneapolis</option>
+                                                <option value="Chennai"{" selected" if table[i]['State'] == "Chennai" else ""}>Chennai</option>
+                                                <option value="Gurgaon"{" selected" if table[i]['State'] == "Gurgaon" else ""}>Gurgaon</option>
+                                                <option value="Noida"{" selected" if table[i]['State'] == "Noida" else ""}>Noida</option>
+                                                <option value="Abu Dhabi"{" selected" if table[i]['State'] == "Abu Dhabi" else ""}>Abu Dhabi</option>
+                                                <option value="Howrah"{" selected" if table[i]['State'] == "Howrah" else ""}>Howrah</option>
+                                                <option value="New Delhi"{" selected" if table[i]['State'] == "New Delhi" else ""}>New Delhi</option>
+                                                <option value="Gurugram"{" selected" if table[i]['State'] == "Gurugram" else ""}>Gurugram</option>
+                                                <option value="Fremont"{" selected" if table[i]['State'] == "Fremont" else ""}>Fremont</option>
+                                                <option value="Dubai"{" selected" if table[i]['State'] == "Dubai" else ""}>Dubai</option>
+                                                <option value="Jaipur"{" selected" if table[i]['State'] == "Jaipur" else ""}>Jaipur</option>
+                                                <option value="Goa"{" selected" if table[i]['State'] == "Goa" else ""}>Goa</option>
+                                                <option value="Ahmedabad"{" selected" if table[i]['State'] == "Ahmedabad" else ""}>Ahmedabad</option>
+                                                <option value="Kochi"{" selected" if table[i]['State'] == "Kochi" else ""}>Kochi</option>
+                                                <option value="Visakhapatnam"{" selected" if table[i]['State'] == "Visakhapatnam" else ""}>Visakhapatnam</option>
+                                                <option value="Hyderabad"{" selected" if table[i]['State'] == "Hyderabad" else ""}>Hyderabad</option>
+                                                <option value="Coimbatore"{" selected" if table[i]['State'] == "Coimbatore" else ""}>Coimbatore</option>
+                                                <option value="Delhi"{" selected" if table[i]['State'] == "Delhi" else ""}>Delhi</option>
+                                                <option value="Boca Raton"{" selected" if table[i]['State'] == "Boca Raton" else ""}>Boca Raton</option>
+                                                <option value="Tiruppur"{" selected" if table[i]['State'] == "Tiruppur" else ""}>Tiruppur</option>
+                                                <option value="Gandhi Nagar"{" selected" if table[i]['State'] == "Gandhi Nagar" else ""}>Gandhi Nagar</option>
+                                                <option value="Raipur"{" selected" if table[i]['State'] == "Raipur" else ""}>Raipur</option>
+                                                <option value="Alappuzha"{" selected" if table[i]['State'] == "Alappuzha" else ""}>Alappuzha</option>
+                                                <option value="Bhagalpur"{" selected" if table[i]['State'] == "Bhagalpur" else ""}>Bhagalpur</option>
+                                                <option value="Hyderabad"{" selected" if table[i]['State'] == "Hyderabad" else ""}>Hyderabad</option>
+                                                <option value="Manama"{" selected" if table[i]['State'] == "Manama" else ""}>Manama</option>
+                                                <option value="Riyadh"{" selected" if table[i]['State'] == "Riyadh" else ""}>Riyadh</option>
+                                                <option value="San Francisco"{" selected" if table[i]['State'] == "San Francisco" else ""}>San Francisco</option>
+                                                <option value="Delft"{" selected" if table[i]['State'] == "Delft" else ""}>Delft</option>
+                                                <option value="Sambalpur"{" selected" if table[i]['State'] == "Sambalpur" else ""}>Sambalpur</option>
+                                                <option value="Shahjahanpur"{" selected" if table[i]['State'] == "Shahjahanpur" else ""}>Shahjahanpur</option>
+                                                <option value="Navi Mumbai"{" selected" if table[i]['State'] == "Navi Mumbai" else ""}>Navi Mumbai</option>
+                                                <option value="Faridabad"{" selected" if table[i]['State'] == "Faridabad" else ""}>Faridabad</option>
                                             </select>
                                         </div>
                                         <div class="my-2"></div>
@@ -257,26 +257,26 @@ def companies():
                                         </div>
                                         <div class="col-md-9">
                                             <select id="edit_company_sector_{table[i]['Company ID']}">
-                                                <option value="Information Technology"{" selected" if {table[i]['Sector']} == "Information Technology" else ""}>Information Technology</option>
-                                                <option value="Healthcare"{" selected" if {table[i]['Sector']} == "Healthcare" else ""}>Healthcare</option>
-                                                <option value="Finance"{" selected" if {table[i]['Sector']} == "Finance" else ""}>Finance</option>
-                                                <option value="Education"{" selected" if {table[i]['Sector']} == "Education" else ""}>Education</option>
-                                                <option value="Manufacturing"{" selected" if {table[i]['Sector']} == "Manufacturing" else ""}>Manufacturing</option>
-                                                <option value="Retail"{" selected" if {table[i]['Sector']} == "Retail" else ""}>Retail</option>
-                                                <option value="Telecommunications"{" selected" if {table[i]['Sector']} == "Telecommunications" else ""}>Telecommunications</option>
-                                                <option value="Hospitality"{" selected" if {table[i]['Sector']} == "Hospitality" else ""}>Hospitality</option>
-                                                <option value="Energy"{" selected" if {table[i]['Sector']} == "Energy" else ""}>Energy</option>
-                                                <option value="Transportation"{" selected" if {table[i]['Sector']} == "Transportation" else ""}>Transportation</option>
-                                                <option value="Entertainment"{" selected" if {table[i]['Sector']} == "Entertainment" else ""}>Entertainment</option>
-                                                <option value="Agriculture"{" selected" if {table[i]['Sector']} == "Agriculture" else ""}>Agriculture</option>
-                                                <option value="Construction"{" selected" if {table[i]['Sector']} == "Construction" else ""}>Construction</option>
-                                                <option value="Pharmaceuticals"{" selected" if {table[i]['Sector']} == "Pharmaceuticals" else ""}>Pharmaceuticals</option>
-                                                <option value="Automotive"{" selected" if {table[i]['Sector']} == "Automotive" else ""}>Automotive</option>
-                                                <option value="Media"{" selected" if {table[i]['Sector']} == "Media" else ""}>Media</option>
-                                                <option value="Real Estate"{" selected" if {table[i]['Sector']} == "Real Estate" else ""}>Real Estate</option>
-                                                <option value="Aerospace"{" selected" if {table[i]['Sector']} == "Aerospace" else ""}>Aerospace</option>
-                                                <option value="Environmental"{" selected" if {table[i]['Sector']} == "Environmental" else ""}>Environmental</option>
-                                                <option value="Government"{" selected" if {table[i]['Sector']} == "Government" else ""}>Government</option>
+                                                <option value="Information Technology"{" selected" if table[i]['Sector'] == "Information Technology" else ""}>Information Technology</option>
+                                                <option value="Healthcare"{" selected" if table[i]['Sector'] == "Healthcare" else ""}>Healthcare</option>
+                                                <option value="Finance"{" selected" if table[i]['Sector'] == "Finance" else ""}>Finance</option>
+                                                <option value="Education"{" selected" if table[i]['Sector'] == "Education" else ""}>Education</option>
+                                                <option value="Manufacturing"{" selected" if table[i]['Sector'] == "Manufacturing" else ""}>Manufacturing</option>
+                                                <option value="Retail"{" selected" if table[i]['Sector'] == "Retail" else ""}>Retail</option>
+                                                <option value="Telecommunications"{" selected" if table[i]['Sector'] == "Telecommunications" else ""}>Telecommunications</option>
+                                                <option value="Hospitality"{" selected" if table[i]['Sector'] == "Hospitality" else ""}>Hospitality</option>
+                                                <option value="Energy"{" selected" if table[i]['Sector'] == "Energy" else ""}>Energy</option>
+                                                <option value="Transportation"{" selected" if table[i]['Sector'] == "Transportation" else ""}>Transportation</option>
+                                                <option value="Entertainment"{" selected" if table[i]['Sector'] == "Entertainment" else ""}>Entertainment</option>
+                                                <option value="Agriculture"{" selected" if table[i]['Sector'] == "Agriculture" else ""}>Agriculture</option>
+                                                <option value="Construction"{" selected" if table[i]['Sector'] == "Construction" else ""}>Construction</option>
+                                                <option value="Pharmaceuticals"{" selected" if table[i]['Sector'] == "Pharmaceuticals" else ""}>Pharmaceuticals</option>
+                                                <option value="Automotive"{" selected" if table[i]['Sector'] == "Automotive" else ""}>Automotive</option>
+                                                <option value="Media"{" selected" if table[i]['Sector'] == "Media" else ""}>Media</option>
+                                                <option value="Real Estate"{" selected" if table[i]['Sector'] == "Real Estate" else ""}>Real Estate</option>
+                                                <option value="Aerospace"{" selected" if table[i]['Sector'] == "Aerospace" else ""}>Aerospace</option>
+                                                <option value="Environmental"{" selected" if table[i]['Sector'] == "Environmental" else ""}>Environmental</option>
+                                                <option value="Government"{" selected" if table[i]['Sector'] == "Government" else ""}>Government</option>
                                             </select>
                                         </div>
                                         <div class="my-2"></div>
@@ -287,10 +287,10 @@ def companies():
                                         </div>
                                         <div class="col-md-9">
                                             <select id="edit_company_employees_{table[i]['Company ID']}">
-                                                <option value="1k-5k"{" selected" if {table[i]['Employees']} == "1k-5k" else ""}>1k-5k</option>
-                                                <option value="5k-10k"{" selected" if {table[i]['Employees']} == "5k-10k" else ""}>5k-10k</option>
-                                                <option value="10k-50k"{" selected" if {table[i]['Employees']} == "10k-50k" else ""}>10k-50k</option>
-                                                <option value="1 Lakh+"{" selected" if {table[i]['Employees']} == "1 Lakh+" else ""}>1 Lakh+</option>
+                                                <option value="1k-5k"{" selected" if table[i]['Employees'] == "1k-5k" else ""}>1k-5k</option>
+                                                <option value="5k-10k"{" selected" if table[i]['Employees'] == "5k-10k" else ""}>5k-10k</option>
+                                                <option value="10k-50k"{" selected" if table[i]['Employees'] == "10k-50k" else ""}>10k-50k</option>
+                                                <option value="1 Lakh+"{" selected" if table[i]['Employees'] == "1 Lakh+" else ""}>1 Lakh+</option>
                                             </select>
                                         </div>
                                         <div class="my-2"></div>
