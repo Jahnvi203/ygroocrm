@@ -1730,12 +1730,12 @@ def add_bulk_email_log():
         product = request.form['product']
         log_list_id = request.form['list_id']
         log_list_name = request.form['list_name']
-        matches = bulk_emails_col.find({
+        matches = list(bulk_emails_col.find({
             'Name': {
                 '$regex': f'^{re.escape(log_name)}$',
                 '$options': 'i'
             }
-        })
+        }))
         if len(matches) > 0:
             return "Bulk Email Log Already Added"
         else:
