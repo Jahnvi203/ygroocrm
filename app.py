@@ -40,7 +40,7 @@ def index():
     else:
         try:
             today_dt = datetime.now(timezone(timedelta(hours = 5, minutes = 30))).strftime('%Y-%m-%dT%H:%M:%SZ')
-            current_week_dt = datetime.now(timezone(timedelta(hours = 5, minutes = 30))) + timedelta(days = 7).strftime('%Y-%m-%dT%H:%M:%SZ')
+            current_week_dt = (datetime.now(timezone(timedelta(hours = 5, minutes = 30))) + timedelta(days = 7)).strftime('%Y-%m-%dT%H:%M:%SZ')
             pending_list = list(reminders_col.find({
                 'Show': True,
                 'Due Date & Time': {'$lt': today_dt}
