@@ -1645,19 +1645,20 @@ def bulk_email_opened_status():
                     opened_dt = opened_dt.replace(tzinfo = timezone.utc).astimezone(timezone(timedelta(hours = 5, minutes = 30)))
                     log_col.update_one({"_id": row['_id']}, {"$set": {"Opened Status": "Yes", "Opened Date & Time": opened_dt}})
                     session['check_stopped_at'] = row['Email']
-            os.environ['last_opened_status_checked'] = str(datetime.now(pytz.timezone('Asia/Kolkata')))
-            os.environ['check_type'] = "complete"
+            last_opened_status_checked = str(datetime.now(pytz.timezone('Asia/Kolkata')))
+            check_type = "complete"
             message = "Opened Status Checked Successfully"
         except Exception as e:
             traceback.print_exc()
-            os.environ['last_opened_status_checked'] = str(datetime.now(pytz.timezone('Asia/Kolkata')))
-            os.environ['check_type'] = "partial"
+            last_opened_status_checked = str(datetime.now(pytz.timezone('Asia/Kolkata')))
+            check_type = "partial"
             print("HelpScout ID:", str(row['HelpScout ID']))
             print("Email Stopped At:", session['check_stopped_at'])
             message = f"Stopped at {session['check_stopped_at']}"
     else:
         message = "No Bulk Emails Sent Out"
-        os.environ['last_opened_status_checked'] = str(datetime.now(pytz.timezone('Asia/Kolkata')))
+        last_opened_status_checked = str(datetime.now(pytz.timezone('Asia/Kolkata')))
+        check_type = "complete"
     opened_list = list(log_col.find({"Opened Status": "Yes"}).sort('Opened Date & Time', -1))
     closed_list = list(log_col.find({"Opened Status": "No"}).sort("Date & Time Sent"))
     opened_rows_html = ""
@@ -1718,7 +1719,8 @@ def bulk_email_opened_status():
         </table>"""
     else:
         closed_table_html = "No unopened emails."
-    last_checked = f"Last checked at {str(str(datetime.strptime(os.getenv('last_opened_status_checked')), '%Y-%m-%d %H:%M:%S.%f%z').strftime('%d/%m/%Y %I:%M %p'))} ({os.getenv('check_type')})"
+    last_opened_status_checked = 
+    last_checked = f"Last checked at {last_opened_status_checked.strftime('%d/%m/%Y %I:%M %p')} ({check_type)})"
     return render_template("view_bulk_email.html", last_checked = last_checked, opened_table_html = opened_table_html, closed_table_html = closed_table_html, message = message)
 
 @app.route('/add-bulk-email-log', methods = ['GET', 'POST'])
