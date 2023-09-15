@@ -369,7 +369,7 @@ def process_status_change():
     try:
         company_id = int(request.form['company_id'])
         new_status = request.form['new_status']
-        companies_col.update_one({'Company ID': company_id}, {"$set": {'Status': new_status})
+        companies_col.update_one({'Company ID': company_id}, {"$set": {'Status': new_status}})
         return "Status Change Processed Successfully"
     except Exception as e:
         traceback.print_exc()
