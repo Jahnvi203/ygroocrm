@@ -1658,7 +1658,7 @@ def bulk_email_opened_status():
     else:
         message = "No Bulk Emails Sent Out"
         os.environ['last_opened_status_checked'] = str(datetime.now(pytz.timezone('Asia/Kolkata')))
-    opened_list = list(log_col.find({"Opened Status": "Yes"}).sort('Opened Date & Time', reverse = True))
+    opened_list = list(log_col.find({"Opened Status": "Yes"}).sort('Opened Date & Time', -1))
     closed_list = list(log_col.find({"Opened Status": "No"}).sort("Date & Time Sent"))
     opened_rows_html = ""
     closed_rows_html = ""
