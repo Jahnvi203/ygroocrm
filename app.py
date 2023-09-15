@@ -1645,19 +1645,19 @@ def bulk_email_opened_status():
                     opened_dt = opened_dt.replace(tzinfo = timezone.utc).astimezone(timezone(timedelta(hours = 5, minutes = 30)))
                     log_col.update_one({"_id": row['_id']}, {"$set": {"Opened Status": "Yes", "Opened Date & Time": opened_dt}})
                     session['check_stopped_at'] = row['Email']
-            last_opened_status_checked = str(datetime.now(pytz.timezone('Asia/Kolkata')))
+            last_opened_status_checked = datetime.now(pytz.timezone('Asia/Kolkata'))
             check_type = "complete"
             message = "Opened Status Checked Successfully"
         except Exception as e:
             traceback.print_exc()
-            last_opened_status_checked = str(datetime.now(pytz.timezone('Asia/Kolkata')))
+            last_opened_status_checked = datetime.now(pytz.timezone('Asia/Kolkata'))
             check_type = "partial"
             print("HelpScout ID:", str(row['HelpScout ID']))
             print("Email Stopped At:", session['check_stopped_at'])
             message = f"Stopped at {session['check_stopped_at']}"
     else:
         message = "No Bulk Emails Sent Out"
-        last_opened_status_checked = str(datetime.now(pytz.timezone('Asia/Kolkata')))
+        last_opened_status_checked = datetime.now(pytz.timezone('Asia/Kolkata'))
         check_type = "complete"
     opened_list = list(log_col.find({"Opened Status": "Yes"}).sort('Opened Date & Time', -1))
     closed_list = list(log_col.find({"Opened Status": "No"}).sort("Date & Time Sent"))
