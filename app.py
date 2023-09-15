@@ -643,12 +643,12 @@ def view_company(id):
 @app.route('/process-company-change', methods = ['POST'])
 def process_company_change():
     try:
-        companies_col.update_one({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name'], "State": request.form['state'], "Sector": request.form['sector'], "Employees": request.form['employees']})
-        contacts_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']})
-        meetings_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']})
-        reminders_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']})
-        log_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']})
-        lists_contacts_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']})
+        companies_col.update_one({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name'], "State": request.form['state'], "Sector": request.form['sector'], "Employees": request.form['employees']}})
+        contacts_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
+        meetings_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
+        reminders_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
+        log_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
+        lists_contacts_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
         bearer_token = get_bearer_token()
         headers = {'Authorization': f"Bearer {bearer_token}"}
         for contact in contacts_col.find({'Company ID': int(request.form['id'])}):
@@ -666,10 +666,10 @@ def process_company_change():
 @app.route('/process-contact-change', methods = ['POST'])
 def process_contact_change():
     try:
-        contacts_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Name": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']})
-        reminders_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Cotact": request.form['name']})
-        log_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Contact": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']})
-        lists_contacts_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Contact": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']})
+        contacts_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Name": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']}})
+        reminders_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Cotact": request.form['name']}})
+        log_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Contact": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']}})
+        lists_contacts_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Contact": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']}})
         hs_id = contacts_col.find_one({'Contact ID': int(request.form['id'])})['HelpScout ID']
         bearer_token = get_bearer_token()
         headers = {'Authorization': f"Bearer {bearer_token}"}
@@ -842,8 +842,8 @@ def get_bearer_token():
                 }
             ]
             requests.put(render_url, json = payload, headers = headers)
-            bearer_col.update_one({'Key': 'Bearer Token'}, {"$set": {"Value": bearer_token_new})
-            bearer_col.update_one({'Key': 'Bearer Expiry'}, {"$set": {"Value": bearer_expiry_new})
+            bearer_col.update_one({'Key': 'Bearer Token'}, {"$set": {"Value": bearer_token_new}})
+            bearer_col.update_one({'Key': 'Bearer Expiry'}, {"$set": {"Value": bearer_expiry_new}})
             return bearer_token_new
         else:
             return bearer_token
@@ -1032,7 +1032,7 @@ def add_meeting():
 @app.route('/process-meeting-change', methods = ['POST'])
 def process_meeting_change():
     try:
-        meetings_col.update_one({'Meeting ID'} == int(request.form['id']), {"$set": {"Type": request.form['meeting_type'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Start Date & Time": request.form['start_dt'], "Due Date & Time": request.form['end_dt'], "Product(s)": request.form['prods'], "Agenda": request.form['agenda']})
+        meetings_col.update_one({'Meeting ID'} == int(request.form['id']), {"$set": {"Type": request.form['meeting_type'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Start Date & Time": request.form['start_dt'], "Due Date & Time": request.form['end_dt'], "Product(s)": request.form['prods'], "Agenda": request.form['agenda']}})
         return "Meeting Change Processed Successfully"
     except Exception as e:
         traceback.print_exc()
@@ -1199,7 +1199,7 @@ def check_reminder():
         id = int(request.form['id'])
         reminders_col.update_one({'Reminder ID': id}, {"$set": {
             'Show': False
-        })
+        }})
         return "Reminder Checked Successfully"
     except Exception as e:
         traceback.print_exc()
@@ -1387,7 +1387,7 @@ def save_edit_list():
         return "List Already Added"
     else:
         try:
-            contact_lists_col.update_one({'List ID': list_id}, {"$set": {"Name": list_name})
+            contact_lists_col.update_one({'List ID': list_id}, {"$set": {"Name": list_name}})
             lists_contacts_col.delete_many({'List ID': list_id})
             for contact in list_contacts:
                 contact_row = contacts_col.find_one({'Contact ID': int(contact)})
@@ -1608,17 +1608,17 @@ def send_log():
                     'Opened Date & Time': "Not Opened"
                 })
                 session['email_stopped_at'] = contact['Email']
-            bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Yes"})
+            bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Yes"}})
             return "Bulk Emails Sent Out Successfully"
         except Exception as e:
             traceback.print_exc()
             print("Log ID:", log_id)
             print("Email Stopped At:", session['email_stopped_at'])
             if session['email_stopped_at'] == "Not started yet":
-                bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "No"})
+                bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "No"}})
                 return session['email_stopped_at']
             else:
-                bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Partial"})
+                bulk_emails_col.update_one({'Log ID': log_id}, {"$set": {"Sent Status": "Partial"}})
                 return "Stopped at", session['email_stopped_at']
     else:
         return "No Contacts in List"
@@ -1637,7 +1637,7 @@ def bulk_email_opened_status():
                     opened_dt = response.json()['_embedded']['threads'][0]['openedAt']
                     opened_dt = datetime.strptime(opened_dt, "%Y-%m-%dT%H:%M:%SZ")
                     opened_dt = opened_dt.replace(tzinfo = timezone.utc).astimezone(timezone(timedelta(hours = 5, minutes = 30)))
-                    log_col.update_one({"_id": row['_id']}, {"$set": {"Opened Status": "Yes", "Opened Date & Time": opened_dt})
+                    log_col.update_one({"_id": row['_id']}, {"$set": {"Opened Status": "Yes", "Opened Date & Time": opened_dt}})
                     session['check_stopped_at'] = row['Email']
             last_opened_status_checked = datetime.now(pytz.timezone('Asia/Kolkata'))
             check_type = "complete"
