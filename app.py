@@ -1634,7 +1634,7 @@ def bulk_email_opened_status():
     bearer_token = get_bearer_token()
     headers = {'Authorization': f"Bearer {bearer_token}"}
     bulk_email_list = list(log_col.find({"Opened Status": "No"}))
-    if len(bulk_email_list) != 0:
+    if len(bulk_email_list) > 0:
         session['check_stopped_at'] = "Not started yet"
         try:
             for row in bulk_email_list:
@@ -1652,7 +1652,7 @@ def bulk_email_opened_status():
             traceback.print_exc()
             os.environ['last_opened_status_checked'] = str(datetime.now(pytz.timezone('Asia/Kolkata')))
             os.environ['check_type'] = "partial"
-            print("HelpScout ID:", str(row[11]))
+            print("HelpScout ID:", str(row['HelpScout ID']))
             print("Email Stopped At:", session['check_stopped_at'])
             message = f"Stopped at {session['check_stopped_at']}"
     else:
@@ -1662,7 +1662,7 @@ def bulk_email_opened_status():
     closed_list = list(log_col.find({"Opened Status": "No"}).sort("Date & Time Sent"))
     opened_rows_html = ""
     closed_rows_html = ""
-    if len(opened_list) != 0:
+    if len(opened_list) > 0:
         for i in range(len(opened_list)):
             opened_rows_html += f"""<tr>
                 <td>{i + 1}</td>
@@ -1691,7 +1691,7 @@ def bulk_email_opened_status():
         </table>"""
     else:
         opened_table_html = "No opened emails."
-    if len(closed_list) != 0:
+    if len(closed_list) > 0:
         for i in range(len(closed_list)):
             closed_rows_html += f"""<tr>
                 <td>{i + 1}</td>
