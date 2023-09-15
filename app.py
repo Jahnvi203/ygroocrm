@@ -947,7 +947,7 @@ def add_contact():
 def add_phone_comm(id):
     try:
         id = int(id)
-        name = contacts_col.find_one({"Contact ID" == id})['Name']
+        name = contacts_col.find_one({"Contact ID": id})['Name']
         start_dt = request.form['start_dt']
         end_dt = request.form['end_dt']
         prods = request.form['prods']
