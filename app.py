@@ -1473,7 +1473,7 @@ def bulk_email():
 def send_log():
     log_id = int(request.form['id'])
     log_row = log_col.find_one({'Log ID': log_id})
-    contacts_to_send = list(lists_contacts_col.find({"Contacts List ID": log_row['Contacts List ID']}))
+    contacts_to_send = list(lists_contacts_col.find({"List ID": log_row['Contacts List ID']}))
     bearer_token = get_bearer_token()
     headers = {'Authorization': f"Bearer {bearer_token}"}
     if len(contacts_to_send) != 0:
