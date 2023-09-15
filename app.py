@@ -1666,7 +1666,7 @@ def bulk_email_opened_status():
         for i in range(len(opened_list)):
             opened_rows_html += f"""<tr>
                 <td>{i + 1}</td>
-                <td>{opened_list[i]['Log Name']}</td>
+                <td>{opened_list[i]['Name']}</td>
                 <td>{opened_list[i]['Contacts List Name']}</td>
                 <td>{opened_list[i]['Contact']}</td>
                 <td>{opened_list[i]['Designation']}</td>
@@ -1695,7 +1695,7 @@ def bulk_email_opened_status():
         for i in range(len(closed_list)):
             closed_rows_html += f"""<tr>
                 <td>{i + 1}</td>
-                <td>{closed_list[i]['Log Name']}</td>
+                <td>{closed_list[i]['Name']}</td>
                 <td>{closed_list[i]['Contacts List Name']}</td>
                 <td>{closed_list[i]['Contact']}</td>
                 <td>{closed_list[i]['Designation']}</td>
