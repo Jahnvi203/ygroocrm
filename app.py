@@ -1670,8 +1670,8 @@ def bulk_email_opened_status():
                 <td>{opened_list[i]['Designation']}</td>
                 <td>{opened_list[i]['Company']}</td>
                 <td>{opened_list[i]['Product']}</td>
-                <td>{str(datetime.strptime(str(opened_list[i]['Date & Time Sent'].astimezone(pytz.timezone('Asia/Kolkata'))), "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y %I:%M %p"))}</td>
-                <td>{str(datetime.strptime(str(opened_list[i]['Opened Date & Time'].astimezone(pytz.timezone('Asia/Kolkata'))), "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y %I:%M %p"))}</td>
+                <td>{str(datetime.strptime(str(opened_list[i]['Date & Time Sent']), "%Y-%m-%d %H:%M:%S%z").astimezone(pytz.timezone('Asia/Kolkata')).strftime("%d/%m/%Y %I:%M %p"))}</td>
+                <td>{str(datetime.strptime(str(opened_list[i]['Opened Date & Time']), "%Y-%m-%d %H:%M:%S%z").astimezone(pytz.timezone('Asia/Kolkata')).strftime("%d/%m/%Y %I:%M %p"))}</td>
             </tr>"""
         opened_table_html = f"""<table class="table table-responsive">
             <tr>
@@ -1699,7 +1699,7 @@ def bulk_email_opened_status():
                 <td>{closed_list[i]['Designation']}</td>
                 <td>{closed_list[i]['Company']}</td>
                 <td>{closed_list[i]['Product']}</td>
-                <td>{str(datetime.strptime(str(closed_list[i]['Date & Time Sent'].astimezone(pytz.timezone('Asia/Kolkata'))), "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y %I:%M %p"))}</td>
+                <td>{str(datetime.strptime(str(closed_list[i]['Date & Time Sent']), "%Y-%m-%d %H:%M:%S%z").astimezone(pytz.timezone('Asia/Kolkata')).strftime("%d/%m/%Y %I:%M %p"))}</td>
             </tr>"""
         closed_table_html = f"""<table class="table table-responsive">
             <tr>
