@@ -1671,7 +1671,7 @@ def bulk_email_opened_status():
                 <td>{opened_list[i]['Company']}</td>
                 <td>{opened_list[i]['Product']}</td>
                 <td>{str(datetime.strptime(str(opened_list[i]['Date & Time Sent'].astimezone(pytz.timezone('Asia/Kolkata'))), "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y %I:%M %p"))}</td>
-                <td>{str(datetime.strptime(str(opened_list[i]['Opened Date & Time'].replace(tzinfo = pytz.timezone('Asia/Kolkata'))), "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y %I:%M %p"))}</td>
+                <td>{str(datetime.strptime(str(opened_list[i]['Opened Date & Time'].astimezone(pytz.timezone('Asia/Kolkata'))), "%Y-%m-%d %H:%M:%S").strftime("%d/%m/%Y %I:%M %p"))}</td>
             </tr>"""
         opened_table_html = f"""<table class="table table-responsive">
             <tr>
