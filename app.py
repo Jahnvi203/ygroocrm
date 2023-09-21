@@ -1480,6 +1480,10 @@ def send_log():
                     <br><br>
                     In today's business landscape, the need to <b>develop talent better, faster, and at lower costs</b> has never been more critical. This is where YGROO.TRAINING comes into play with our innovative Learning and Development as a Service (L&DaaS) platform.
                     <br><br>
+                    <b>YGROO</b> is a <b>Social Enterprise</b> led by a Global Team of Pioneers and Industry Experts with Centres of Excellence in Mumbai, Sydney, Perth and Singapore.
+                    <br><br>
+                    <a href="https://youtu.be/ZQlcdVfbudo" target="_blank">Watch a 4-Minute Video</a> | <a href="https://www.dropbox.com/scl/fi/pd49824s27f6mwdrdfm4j/YGROO.TRAINING-BROCHURE.pdf?rlkey=tom2hoakzjmiw4rsrk7kjr6o4&dl=0" target="_blank">View our Brochure</a>
+                    <br><br>
                     <b>Experience the Future with L&DaaS</b>
                     <br><br>
                     Making the shift from traditional in-house training to L&DaaS can significantly impact your company's growth trajectory. Our platform offers a <b>unique edge</b> that sets us apart:
@@ -1502,6 +1506,16 @@ def send_log():
                         </li>
                         <li>
                             <b>Embrace the Future Today:</b> Our commitment to growth and excellence is motivated by a social cause, not just profits.
+                        </li>
+                    </ol>
+                    <br>
+                    <b>The Most Trusted Trust Us</b>
+                    <ol>
+                        <li>
+                            <b>Westside, Tata Zudio & StarBazaar:</b> Conducted <b>on-site trainings in 640+ stores</b> to certify employees for Ethics & Prevention of Sexual Harassment (POSH).
+                        </li>
+                        <li>
+                            <b>Motilal Oswal Financial Services:</b> Undertook turnkey management of the First Time Manager's Programme in affiliation with Xavier's Institute of Management & Research (XIMR) including <b>job-role based competency assessments</b> and <b>personalised learning journeys</b>.
                         </li>
                     </ol>
                     <br>
