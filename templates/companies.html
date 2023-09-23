@@ -87,7 +87,7 @@
                         employees: employees.value,
                         status: status.value
                     },
-                    success: function() {
+                    success: function(response) {
                         if (response === "Company Already Added") {
                             alert("Company has already been added");
                             location.reload();
