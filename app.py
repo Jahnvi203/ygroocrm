@@ -247,6 +247,7 @@ def companies():
                                                 <option value="Shahjahanpur"{" selected" if table[i]['State'] == "Shahjahanpur" else ""}>Shahjahanpur</option>
                                                 <option value="Navi Mumbai"{" selected" if table[i]['State'] == "Navi Mumbai" else ""}>Navi Mumbai</option>
                                                 <option value="Faridabad"{" selected" if table[i]['State'] == "Faridabad" else ""}>Faridabad</option>
+                                                <option value="Other"{" selected" if table[i]['State'] == "Other" else ""}>Other</option>
                                             </select>
                                         </div>
                                         <div class="my-2"></div>
@@ -277,6 +278,7 @@ def companies():
                                                 <option value="Aerospace"{" selected" if table[i]['Sector'] == "Aerospace" else ""}>Aerospace</option>
                                                 <option value="Environmental"{" selected" if table[i]['Sector'] == "Environmental" else ""}>Environmental</option>
                                                 <option value="Government"{" selected" if table[i]['Sector'] == "Government" else ""}>Government</option>
+                                                <option value="Other"{" selected" if table[i]['Sector'] == "Other" else ""}>Other</option>
                                             </select>
                                         </div>
                                         <div class="my-2"></div>
@@ -291,6 +293,7 @@ def companies():
                                                 <option value="5k-10k"{" selected" if table[i]['Employees'] == "5k-10k" else ""}>5k-10k</option>
                                                 <option value="10k-50k"{" selected" if table[i]['Employees'] == "10k-50k" else ""}>10k-50k</option>
                                                 <option value="1 Lakh+"{" selected" if table[i]['Employees'] == "1 Lakh+" else ""}>1 Lakh+</option>
+                                                <option value="Other"{" selected" if table[i]['Employees'] == "Other" else ""}>Other</option>
                                             </select>
                                         </div>
                                         <div class="my-2"></div>
