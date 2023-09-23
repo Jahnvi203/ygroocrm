@@ -1485,7 +1485,7 @@ def send_log():
                     <br><br>
                     <b>YGROO</b> is a <b>Social Enterprise</b> led by a Global Team of Pioneers and Industry Experts with Centres of Excellence in Mumbai, Sydney, Perth and Singapore.
                     <br><br>
-                    <a href="https://youtu.be/ZQlcdVfbudo" target="_blank">Watch a 4-Minute Video</a> | <a href="https://www.dropbox.com/scl/fi/pd49824s27f6mwdrdfm4j/YGROO.TRAINING-BROCHURE.pdf?rlkey=tom2hoakzjmiw4rsrk7kjr6o4&dl=0" target="_blank">View our Brochure</a>
+                    <a href="https://youtu.be/URWtNkpuK3w" target="_blank">Watch a 4-Minute Video</a> | <a href="https://www.dropbox.com/scl/fi/b7150vmicgeftvzmcf36z/YGROO.ART-BROCHURE.pdf?rlkey=vb5jc3urdcoebw9vgq4jftrcw&dl=0" target="_blank">View our Brochure</a>
                     <br><br>
                     <b>Experience the Future with L&DaaS</b>
                     <br><br>
@@ -1538,6 +1538,8 @@ def send_log():
                     Introducing a pioneering AI-driven solution, YGROO.ART to revolutionize the way your company acquire and develops talent.
                     <br><br>
                     In today's business landscape, the need to <b>source, recruit and retail top-tier talent</b> has never been more critical. This is where YGROO.ART comes into play to ensure:
+                    <br><br>
+                    <b>YGROO</b> is a <b>Social Enterprise</b> led by a Global Team of Pioneers and Industry Experts with Centres of Excellence in Mumbai, Sydney, Perth and Singapore.
                     <br>
                     <ol>
                         <li><b>Increased Retention:</b> Our AI matches candidates based on skills, competencies, and behaviours required by their job role. </li>
