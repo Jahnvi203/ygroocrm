@@ -38,8 +38,6 @@ users_col = mongo.db.users
 def index():
     if 'login_email' not in session or 'login_pwd' not in session:
         return redirect(url_for("login"))
-    elif session['access_level'] != "admin" and session['access_level'] != "sales":
-        abort(403)
     else:
         try:
             today_dt = datetime.now(timezone(timedelta(hours = 5, minutes = 30))).strftime('%Y-%m-%dT%H:%M:%SZ')
