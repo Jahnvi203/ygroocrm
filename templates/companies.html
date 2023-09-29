@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Companies</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+</head>
+<body>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js" integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V" crossorigin="anonymous"></script>
+    <div id="sidebar" class="sidebar">
+        <a id="home" class="na" onclick="menu(this.id)" href="/">Home</a>
+        <a id="companies" class="active" onclick="menu(this.id)" href="/companies">Companies</a>
+        <a id="company_lists" class="na" onclick="menu(this.id)" href="/company-lists">Company Lists</a>
+        <a id="contacts" class="na" onclick="menu(this.id)" href="/contacts">Contacts</a>
+        <a id="contact_lists" class="na" onclick="menu(this.id)" href="/contact-lists">Contact Lists</a>
+        <a id="meetings" class="na" onclick="menu(this.id)" href="/meetings">Meetings</a>
+        <a id="reminders" class="na" onclick="menu(this.id)" href="/reminders">Reminders</a>
+        <a id="phone_comms" class="na" onclick="menu(this.id)" href="/phone-comms">Phone Comms</a>
+        <a id="bulk_email_log" class="na" onclick="menu(this.id)" href="/bulk-email-log">Bulk Email Log</a>
+    </div>
+    <script>
+        function status_change(id, value) {
+            $.ajax({
+                type: 'POST',
+                url: '/process-status-change',
+                data: {
+                    company_id: id,
+                    new_status: value
+                },
+                success: function() {
+                    if (response === "Status Change Processed Successfully") {
+                        alert("Status changed successfully")
+                        location.reload();
+                    } else {
+                        alert("Status not changed")
+                    }
+                }
+            });
+        };
+        function company_change(id) {
+            const name = document.getElementById("edit_company_name_" + id);
+            const state = document.getElementById("edit_company_state_" + id);
+            const sector = document.getElementById("edit_company_sector_" + id);
+            const employees = document.getElementById("edit_company_employees_" + id);
+            if (name.value === "") {
+                alert("Name is empty")
+            } else {
+                $.ajax({
+                    type: 'POST',
+                    url: '/process-company-change',
+                    data: {
+                        id: id,
+                        name: name.value,
+                        state: state.value,
+                        sector: sector.value,
+                        employees: employees.value
+                    },
+                    success: function(response) {
+                        if (response === "Company Change Processed Successfully") {
+                            alert("Company edited successfully");
+                            location.reload();
+                        } else {
+                            alert("Company not edited")
+                        }
+                    }
+                });
+            }
+        };
+        function add_company() {
+            const name = document.getElementById("add_company_name");
+            const state = document.getElementById("add_company_state");
+            const sector = document.getElementById("add_company_sector");
+            const employees = document.getElementById("add_company_employees");
+            const status = document.getElementById("add_company_status");
+            if (name.value === "") {
+                alert("Name is empty")
+            } else {
+                $.ajax({
+                    type: 'POST',
+                    url: '/add-company',
+                    data: {
+                        name: name.value,
+                        state: state.value,
+                        sector: sector.value,
+                        employees: employees.value,
+                        status: status.value
+                    },
+                    success: function(response) {
+                        if (response === "Company Already Added") {
+                            alert("Company has already been added");
+                            location.reload();
+                        } else if (response === "Company Added Successfully") {
+                            alert("Company added successfully")
+                        } else {
+                            alert("Comapny not added")
+                        }
+                    }
+                });
+            }
+        };
+    </script>
+    <div class="content">
+        <h1>Companies</h1>
+        <br>
+        <button class="view_button" type="button" data-bs-toggle="modal" data-bs-target="#add_company_modal">Add New Company</button>
+        <div class="modal fade" id="add_company_modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">New Company</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="add_company_name">Name</label>
+                            </div>
+                            <div class="col-md-9">
+                                <input id="add_company_name" type="text">
+                            </div>
+                            <div class="my-2"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="add_company_state">State</label>
+                            </div>
+                            <div class="col-md-9">
+                                <select id="add_company_state">
+                                    <option value="Dubai Marina">Dubai Marina</option>
+                                    <option value="Mumbai">Mumbai</option>
+                                    <option value="Bengaluru">Bengaluru</option>
+                                    <option value="Pune">Pune</option>
+                                    <option value="Morelia">Morelia</option>
+                                    <option value="Kolkata">Kolkata</option>
+                                    <option value="Lille">Lille</option>
+                                    <option value="Delhi">Delhi</option>
+                                    <option value="London">London</option>
+                                    <option value="Mooresville">Mooresville</option>
+                                    <option value="Seattle">Seattle</option>
+                                    <option value="Stockholm">Stockholm</option>
+                                    <option value="Minneapolis">Minneapolis</option>
+                                    <option value="Chennai">Chennai</option>
+                                    <option value="Gurgaon">Gurgaon</option>
+                                    <option value="Noida">Noida</option>
+                                    <option value="Abu Dhabi">Abu Dhabi</option>
+                                    <option value="Howrah">Howrah</option>
+                                    <option value="New Delhi">New Delhi</option>
+                                    <option value="Gurugram">Gurugram</option>
+                                    <option value="Fremont">Fremont</option>
+                                    <option value="Dubai">Dubai</option>
+                                    <option value="Jaipur">Jaipur</option>
+                                    <option value="Goa">Goa</option>
+                                    <option value="Ahmedabad">Ahmedabad</option>
+                                    <option value="Kochi">Kochi</option>
+                                    <option value="Visakhapatnam">Visakhapatnam</option>
+                                    <option value="Hyderabad">Hyderabad</option>
+                                    <option value="Coimbatore">Coimbatore</option>
+                                    <option value="Delhi">Delhi</option>
+                                    <option value="Boca Raton">Boca Raton</option>
+                                    <option value="Tiruppur">Tiruppur</option>
+                                    <option value="Gandhi Nagar">Gandhi Nagar</option>
+                                    <option value="Raipur">Raipur</option>
+                                    <option value="Alappuzha">Alappuzha</option>
+                                    <option value="Bhagalpur">Bhagalpur</option>
+                                    <option value="Hyderabad Secunderabad">Hyderabad Secunderabad</option>
+                                    <option value="Manama">Manama</option>
+                                    <option value="Riyadh">Riyadh</option>
+                                    <option value="San Francisco">San Francisco</option>
+                                    <option value="Delft">Delft</option>
+                                    <option value="Sambalpur">Sambalpur</option>
+                                    <option value="Shahjahanpur">Shahjahanpur</option>
+                                    <option value="Navi Mumbai">Navi Mumbai</option>
+                                    <option value="Faridabad">Faridabad</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="my-2"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="add_company_sector">Sector</label>
+                            </div>
+                            <div class="col-md-9">
+                                <select id="add_company_sector">
+                                    <option value="Information Technology">Information Technology</option>
+                                    <option value="Healthcare">Healthcare</option>
+                                    <option value="Finance">Finance</option>
+                                    <option value="Education">Education</option>
+                                    <option value="Manufacturing">Manufacturing</option>
+                                    <option value="Retail">Retail</option>
+                                    <option value="Telecommunications">Telecommunications</option>
+                                    <option value="Hospitality">Hospitality</option>
+                                    <option value="Energy">Energy</option>
+                                    <option value="Transportation">Transportation</option>
+                                    <option value="Entertainment">Entertainment</option>
+                                    <option value="Agriculture">Agriculture</option>
+                                    <option value="Construction">Construction</option>
+                                    <option value="Pharmaceuticals">Pharmaceuticals</option>
+                                    <option value="Automotive">Automotive</option>
+                                    <option value="Media">Media</option>
+                                    <option value="Real Estate">Real Estate</option>
+                                    <option value="Aerospace">Aerospace</option>
+                                    <option value="Environmental">Environmental</option>
+                                    <option value="Government">Government</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="my-2"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="add_company_employees">Employees</label>
+                            </div>
+                            <div class="col-md-9">
+                                <select id="add_company_employees">
+                                    <option value="1k-5k">1k-5k</option>
+                                    <option value="5k-10k">5k-10k</option>
+                                    <option value="10k-50k">10k-50k</option>
+                                    <option value="1 Lakh+">1 Lakh+</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="my-2"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="add_company_status">Status</label>
+                            </div>
+                            <div class="col-md-9">
+                                <select id="add_company_status">
+                                    <option value="Prospect">Prospect</option>
+                                    <option value="Called">Called</option>
+                                    <option value="Emailed">Emailed</option>
+                                    <option value="Not Interested">Not Interested</option>
+                                    <option value="Proposal Sent">Proposal Sent</option>
+                                    <option value="Meeting Scheduled">Meeting Scheduled</option>
+                                    <option value="In Discussion (Hot)">In Discussion (Hot)</option>
+                                    <option value="In Discussion (Cold)">In Discussion (Cold)</option>
+                                    <option value="MoU Signed">MoU Signed</option>
+                                </select>
+                            </div>
+                            <div class="my-2"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" onclick="add_company()" class="view_button" data-bs-dismiss="modal">Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br><br>
+        <div class="table_container">
+            {{ table_html | safe }}
+        </div>
+    </div>
+</body>
+</html>
