@@ -20,6 +20,9 @@ app.config['MONGO_URI'] = f'mongodb+srv://Jahnvi203:{os.getenv("mongodb_pwd").re
 mongo = PyMongo(app)
 
 companies_col = mongo.db.companies
+company_lists_col = mongo.db.company_lists
+view_access_col = mongo.db.view_access
+lists_companies_col = mongo.db.lists_companies
 contacts_col = mongo.db.contacts
 meetings_col = mongo.db.meetings
 reminders_col = mongo.db.reminders
@@ -148,12 +151,11 @@ def index():
 def companies():
     if 'login_email' not in session or 'login_pwd' not in session:
         return redirect(url_for("login"))
-    elif session['access_level'] != "admin" and session['access_level'] != "sales":
+    elif session['access_level'] != "admin":
         abort(403)
     else:
         try:
             table = list(companies_col.find())
-            statuses = ['Prospect', 'Called', 'Emailed', 'Not Interested', 'Proposal Sent', 'Meeting Scheduled', 'MoU Signed']
             if len(table) > 0:
                 rows_html = ""
                 for i in range(len(table)):
@@ -373,6 +375,7 @@ def process_status_change():
         company_id = int(request.form['company_id'])
         new_status = request.form['new_status']
         companies_col.update_one({'Company ID': company_id}, {"$set": {'Status': new_status}})
+        lists_companies_col.update_one({'Company ID': company_id}, {"$set": {'Status': new_status}})
         return "Status Change Processed Successfully"
     except Exception as e:
         traceback.print_exc()
@@ -652,6 +655,7 @@ def process_company_change():
         reminders_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
         log_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
         lists_contacts_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
+        lists_companies_col.update_many({'Company ID': int(request.form['id'])}, {"$set": {"Company": request.form['name']}})
         bearer_token = get_bearer_token()
         headers = {'Authorization': f"Bearer {bearer_token}"}
         for contact in contacts_col.find({'Company ID': int(request.form['id'])}):
@@ -670,7 +674,7 @@ def process_company_change():
 def process_contact_change():
     try:
         contacts_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Name": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']}})
-        reminders_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Cotact": request.form['name']}})
+        reminders_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Contact": request.form['name']}})
         log_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Contact": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']}})
         lists_contacts_col.update_many({'Contact ID': int(request.form['id'])}, {"$set": {"Contact": request.form['name'], "Designation": request.form['designation'], "Company ID": int(request.form['company_id']), "Company": request.form['company_name'], "Email": request.form['email'], "Mobile": request.form['mobile']}})
         hs_id = contacts_col.find_one({'Contact ID': int(request.form['id'])})['HelpScout ID']
@@ -795,6 +799,7 @@ def get_contact_comms(id):
                         <td>{datetime.strptime(phone_comm['Start Date & Time'], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
                         <td>{datetime.strptime(phone_comm['End Date & Time'], "%Y-%m-%dT%H:%M").strftime("%d/%m/%Y %I:%M %p")}</td>
                         <td>{phone_comm['Product(s)']}</td>
+                        <td>{phone_comm['Outcome']}</td>
                         <td>{phone_comm['Notes']}</td>
                     </tr>"""
                 phone_comms_html = f"""<table class="table table-responsive">
@@ -803,6 +808,7 @@ def get_contact_comms(id):
                             <th>Start Date & Time</th>
                             <th>End Date & Time</th>
                             <th>Product(s) Pitched</th>
+                            <th>Ouctome</th>
                             <th>Notes</th>
                         </tr>
                         {phone_comms_rows_html}
@@ -941,6 +947,7 @@ def add_phone_comm(id):
         start_dt = request.form['start_dt']
         end_dt = request.form['end_dt']
         prods = request.form['prods']
+        outcome = request.form['outcome']
         notes = request.form['notes']
         phone_comms_col.insert_one({
             "Comm ID": phone_comms_col.count_documents({}) + 1,
@@ -948,6 +955,7 @@ def add_phone_comm(id):
             "Contact": name,
             "Start Date & Time": start_dt,
             "End Date & Time": end_dt,
+            "Outcome": outcome,
             "Product(s)": prods,
             "Notes": notes
         })
@@ -1031,7 +1039,7 @@ def add_meeting():
     except Exception as e:
         traceback.print_exc()
         return render_template("error.html", error = e)
-    
+
 @app.route('/process-meeting-change', methods = ['POST'])
 def process_meeting_change():
     try:
@@ -1769,6 +1777,40 @@ def add_bulk_email_log():
         traceback.print_exc()
         return render_template("error.html", error = e)
 
+@app.route('/phone-comms', methods=['GET', 'POST'])
+def phone_comms():
+    if 'login_email' not in session or 'login_pwd' not in session:
+        return redirect(url_for("login"))
+    elif session['access_level'] != "admin" and session['access_level'] != "sales":
+        abort(403)
+    else:
+        if request.method == 'POST':
+            try:
+                from_dt = request.form['from_dt']
+                to_dt = request.form['to_dt']
+                phone_comms_gotten = list(phone_comms_col.find({
+                    'Start Date & Time': {'$gte': from_dt, '$lte': to_dt},
+                    'End Date & Time': {'$gte': from_dt, '$lte': to_dt}
+                }).sort('Start Date & Time'))
+                info1 = len(list(phone_comms_col.find({"Outcome": "Not Interested"})))
+                info2 = len(list(phone_comms_col.find({"Outcome": "Call Back Requested"})))
+                info3 = len(list(phone_comms_col.find({"Outcome": "Maybe in the Future"})))
+                info4 = len(list(phone_comms_col.find({"Outcome": "Agreed to a Meeting"})))
+                info5 = len(list(phone_comms_col.find({"Outcome": "Line Busy"})))
+                info6 = len(list(phone_comms_col.find({"Outcome": "No Response"})))
+                info7 = len(list(phone_comms_col.find({"Outcome": "Will Get in Touch if there is a Need"})))
+                info8 = len(list(phone_comms_col.find({"Outcome": "Not the Right Person"})))
+                info9 = len(list(phone_comms_col.find({"Outcome": "Email Requested"})))
+                for entry in phone_comms_gotten:
+                    entry['Start Date & Time'] = datetime.strptime(entry['Start Date & Time'], '%Y-%m-%dT%H:%M').strftime('%d/%m/%Y: %I:%M %p')
+                    entry['End Date & Time'] = datetime.strptime(entry['End Date & Time'], '%Y-%m-%dT%H:%M').strftime('%d/%m/%Y: %I:%M %p')
+                return render_template("phone_comms.html", phone_comms_gotten = phone_comms_gotten, info1 = info1, info2 = info2, info3 = info3, info4 = info4, info5 = info5, info6 = info6, info7 = info7, info8 = info8, info9 = info9)
+            except Exception as e:
+                traceback.print_exc()
+                return render_template("error.html", error = e)
+        else:
+            return render_template("phone_comms.html", phone_comms_gotten = None, info1 = None, info2 = None, info3 = None, info4 = None, info5 = None, info6 = None, info7 = None, info8 = None, info9 = None)
+
 @app.route('/login')
 def login():
     if "login_email" in session and "login_pwd" in session:
@@ -1798,3 +1840,348 @@ def logout():
     session.pop('login_pwd', default = None)
     session.pop('access_level', default = None)
     return "Logged Out Successfully"
+
+@app.route("/company-lists", methods = ['GET', 'POST'])
+def company_lists():
+    if 'login_email' not in session or 'login_pwd' not in session:
+        return redirect(url_for("login"))
+    elif session['access_level'] != "admin" and session['access_level'] != "sales":
+        abort(403)
+    else:
+        try:
+            table = list(companies_col.find())
+            if len(table) != 0:
+                rows_html = ""
+                for i in range(len(table)):
+                    rows_html += f"""<tr>
+                        <td><input id="list_company_{table[i]['Company ID']}" type="checkbox" value="{table[i]['Company ID']}"></td>
+                        <td>{table[i]['Company']}</td>
+                        <td>{table[i]['Sector']}</td>
+                        <td>{table[i]['State']}</td>
+                        <td>{table[i]['Employees']}</td>
+                        <td>{table[i]['Status']}</td>
+                    </tr>"""
+                table_html = f"""<table class="table table-responsive">
+                    <tr>
+                        <th></th>
+                        <th>Company</th>
+                        <th>Sector</th>
+                        <th>State</th>
+                        <th>Employees</th>
+                        <th>Status</th>
+                    </tr>
+                    {rows_html}
+                </table>"""
+            else:
+                table_html = ""
+            lists_table = list(company_lists_col.find())
+            if len(lists_table) != 0:    
+                rows_lists_html = ""
+                for i in range(len(lists_table)):
+                    rows_lists_html += f"""<tr>
+                        <td>{lists_table[i]['List ID']}</td>
+                        <td>{lists_table[i]['Name']}</td>
+                        <td><a href="/company-list/{lists_table[i]['List ID']}"><button class="view_button">View</button></a></td>
+                    </tr>"""
+                table_lists_html = f"""<table class="table table-responsive">
+                    <tr>
+                        <th>S.No.</th>
+                        <th>Name</th>
+                        <th>View</th>
+                    </tr>
+                    {rows_lists_html}
+                </table>"""
+            else:
+                table_lists_html = ""
+            return render_template("company_lists.html", list_companies_html = table_html, lists_table_html = table_lists_html)
+        except Exception as e:
+            traceback.print_exc()
+            return render_template("error.html", error = e)
+
+@app.route("/add-company-list", methods = ['POST'])
+def add_company_list():
+    try:
+        list_name = request.form['name']
+        list_companies = request.form.getlist('companies[]')
+        same_name_found = list(company_lists_col.find({
+            'List Name': {
+                '$regex': f'^{re.escape(list_name)}$',
+                '$options': 'i'  # 'i' option for case-insensitive matching
+            }
+        }))
+        if len(same_name_found) > 0:
+            return "List Already Added"
+        else:
+            company_lists_col.insert_one({
+                'List ID': company_lists_col.count_documents({}) + 1,
+                'Name': list_name
+            })
+            for company in list_companies:
+                company_row = companies_col.find_one({'Company ID': int(company)})
+                lists_companies_col.insert_one({
+                    'List ID': company_lists_col.count_documents({}),
+                    'Name': list_name,
+                    'Company ID': company_row['Company ID'],
+                    'Company': company_row['Company'],
+                    'Sector': company_row['Sector'],
+                    'State': company_row['State'],
+                    'Employees': company_row['Employees'],
+                    'Status': company_row['Status']
+                })
+            return "List Added Successfully"
+    except Exception as e:
+        traceback.print_exc()
+        return render_template("error.html", error = e)
+
+@app.route('/company-list/<id>', methods = ['GET', 'POST'])
+def view_company_list(id):
+    if 'login_email' not in session or 'login_pwd' not in session:
+        return redirect(url_for("login"))
+    elif session['access_level'] != "admin" and session['access_level'] != "sales":
+        abort(403)
+    else:
+        try:
+            table = list(lists_companies_col.find({'List ID': int(id)}))
+            print(table)
+            if len(table) != 0:
+                rows_html = ""
+                for i in range(len(table)):
+                    rows_html += f"""<tr>
+                        <td>{i + 1}</td>
+                        <td>{table[i]['Company']}</td>
+                        <td>{table[i]['State']}</td>
+                        <td>{table[i]['Sector']}</td>
+                        <td>{table[i]['Employees']}</td>
+                        <td>
+                            <select id="status_{table[i]['Company ID']}" onchange="status_change({table[i]['Company ID']}, this.value)">
+                                <option value="Prospect"{" selected" if table[i]['Status'] == "Prospect" else ""}>Prospect</option>
+                                <option value="Called"{" selected" if table[i]['Status'] == "Called" else ""}>Called</option>
+                                <option value="Emailed"{" selected" if table[i]['Status'] == "Emailed" else ""}>Emailed</option>
+                                <option value="Not Interested"{" selected" if table[i]['Status'] == "Not Interested" else ""}>Not Interested</option>
+                                <option value="Proposal Sent"{" selected" if table[i]['Status'] == "Proposal Sent" else ""}>Proposal Sent</option>
+                                <option value="Meeting Scheduled"{" selected" if table[i]['Status'] == "Meeting Scheduled" else ""}>Meeting Scheduled</option>
+                                <option value="In Discussion (Hot)"{" selected" if table[i]['Status'] == "In Discussion (Hot)" else ""}>In Discussion (Hot)</option>
+                                <option value="In Discussion (Cold)"{" selected" if table[i]['Status'] == "In Discussion (Cold)" else ""}>In Discussion (Cold)</option>
+                                <option value="MoU Signed"{" selected" if table[i]['Status'] == "MoU Signed" else ""}>MoU Signed</option>
+                            </select>
+                        </td>
+                        <td><button id="edit_company_{table[i]['Company ID']}" class="edit_button" data-bs-toggle="modal" data-bs-target="#edit_company_modal_{table[i]['Company ID']}">Edit</button></td>
+                        <td><a href="/company/{table[i]['Company ID']}"><button class="view_button">View</button></a></td>
+                    </tr>
+                    <div class="modal fade" id="edit_company_modal_{table[i]['Company ID']}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Edit {table[i]['Company']}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label for="edit_company_name_{table[i]['Company ID']}">Name</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input id="edit_company_name_{table[i]['Company ID']}" type="text" value="{table[i]['Company']}">
+                                        </div>
+                                        <div class="my-2"></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label for="edit_company_state_{table[i]['Company ID']}">State</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <select id="edit_company_state_{table[i]['Company ID']}">
+                                                <option value="Dubai Marina"{" selected" if table[i]['State'] == "Dubai Marina" else ""}>Dubai Marina</option>
+                                                <option value="Mumbai"{" selected" if table[i]['State'] == "Mumbai" else ""}>Mumbai</option>
+                                                <option value="Bengaluru"{" selected" if table[i]['State'] == "Bengaluru" else ""}>Bengaluru</option>
+                                                <option value="Pune"{" selected" if table[i]['State'] == "Pune" else ""}>Pune</option>
+                                                <option value="Morelia"{" selected" if table[i]['State'] == "Morelia" else ""}>Morelia</option>
+                                                <option value="Kolkata"{" selected" if table[i]['State'] == "Kolkata" else ""}>Kolkata</option>
+                                                <option value="Lille"{" selected" if table[i]['State'] == "Lille" else ""}>Lille</option>
+                                                <option value="Delhi"{" selected" if table[i]['State'] == "Delhi" else ""}>Delhi</option>
+                                                <option value="London"{" selected" if table[i]['State'] == "London" else ""}>London</option>
+                                                <option value="Mooresville"{" selected" if table[i]['State'] == "Mooresville" else ""}>Mooresville</option>
+                                                <option value="Seattle"{" selected" if table[i]['State'] == "Seattle" else ""}>Seattle</option>
+                                                <option value="Stockholm"{" selected" if table[i]['State'] == "Stockholm" else ""}>Stockholm</option>
+                                                <option value="Minneapolis"{" selected" if table[i]['State'] == "Minneapolis" else ""}>Minneapolis</option>
+                                                <option value="Chennai"{" selected" if table[i]['State'] == "Chennai" else ""}>Chennai</option>
+                                                <option value="Gurgaon"{" selected" if table[i]['State'] == "Gurgaon" else ""}>Gurgaon</option>
+                                                <option value="Noida"{" selected" if table[i]['State'] == "Noida" else ""}>Noida</option>
+                                                <option value="Abu Dhabi"{" selected" if table[i]['State'] == "Abu Dhabi" else ""}>Abu Dhabi</option>
+                                                <option value="Howrah"{" selected" if table[i]['State'] == "Howrah" else ""}>Howrah</option>
+                                                <option value="New Delhi"{" selected" if table[i]['State'] == "New Delhi" else ""}>New Delhi</option>
+                                                <option value="Gurugram"{" selected" if table[i]['State'] == "Gurugram" else ""}>Gurugram</option>
+                                                <option value="Fremont"{" selected" if table[i]['State'] == "Fremont" else ""}>Fremont</option>
+                                                <option value="Dubai"{" selected" if table[i]['State'] == "Dubai" else ""}>Dubai</option>
+                                                <option value="Jaipur"{" selected" if table[i]['State'] == "Jaipur" else ""}>Jaipur</option>
+                                                <option value="Goa"{" selected" if table[i]['State'] == "Goa" else ""}>Goa</option>
+                                                <option value="Ahmedabad"{" selected" if table[i]['State'] == "Ahmedabad" else ""}>Ahmedabad</option>
+                                                <option value="Kochi"{" selected" if table[i]['State'] == "Kochi" else ""}>Kochi</option>
+                                                <option value="Visakhapatnam"{" selected" if table[i]['State'] == "Visakhapatnam" else ""}>Visakhapatnam</option>
+                                                <option value="Hyderabad"{" selected" if table[i]['State'] == "Hyderabad" else ""}>Hyderabad</option>
+                                                <option value="Coimbatore"{" selected" if table[i]['State'] == "Coimbatore" else ""}>Coimbatore</option>
+                                                <option value="Delhi"{" selected" if table[i]['State'] == "Delhi" else ""}>Delhi</option>
+                                                <option value="Boca Raton"{" selected" if table[i]['State'] == "Boca Raton" else ""}>Boca Raton</option>
+                                                <option value="Tiruppur"{" selected" if table[i]['State'] == "Tiruppur" else ""}>Tiruppur</option>
+                                                <option value="Gandhi Nagar"{" selected" if table[i]['State'] == "Gandhi Nagar" else ""}>Gandhi Nagar</option>
+                                                <option value="Raipur"{" selected" if table[i]['State'] == "Raipur" else ""}>Raipur</option>
+                                                <option value="Alappuzha"{" selected" if table[i]['State'] == "Alappuzha" else ""}>Alappuzha</option>
+                                                <option value="Bhagalpur"{" selected" if table[i]['State'] == "Bhagalpur" else ""}>Bhagalpur</option>
+                                                <option value="Hyderabad"{" selected" if table[i]['State'] == "Hyderabad" else ""}>Hyderabad</option>
+                                                <option value="Manama"{" selected" if table[i]['State'] == "Manama" else ""}>Manama</option>
+                                                <option value="Riyadh"{" selected" if table[i]['State'] == "Riyadh" else ""}>Riyadh</option>
+                                                <option value="San Francisco"{" selected" if table[i]['State'] == "San Francisco" else ""}>San Francisco</option>
+                                                <option value="Delft"{" selected" if table[i]['State'] == "Delft" else ""}>Delft</option>
+                                                <option value="Sambalpur"{" selected" if table[i]['State'] == "Sambalpur" else ""}>Sambalpur</option>
+                                                <option value="Shahjahanpur"{" selected" if table[i]['State'] == "Shahjahanpur" else ""}>Shahjahanpur</option>
+                                                <option value="Navi Mumbai"{" selected" if table[i]['State'] == "Navi Mumbai" else ""}>Navi Mumbai</option>
+                                                <option value="Faridabad"{" selected" if table[i]['State'] == "Faridabad" else ""}>Faridabad</option>
+                                                <option value="Other"{" selected" if table[i]['State'] == "Other" else ""}>Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="my-2"></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label for="edit_company_sector_{table[i]['Company ID']}">Sector</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <select id="edit_company_sector_{table[i]['Company ID']}">
+                                                <option value="Information Technology"{" selected" if table[i]['Sector'] == "Information Technology" else ""}>Information Technology</option>
+                                                <option value="Healthcare"{" selected" if table[i]['Sector'] == "Healthcare" else ""}>Healthcare</option>
+                                                <option value="Finance"{" selected" if table[i]['Sector'] == "Finance" else ""}>Finance</option>
+                                                <option value="Education"{" selected" if table[i]['Sector'] == "Education" else ""}>Education</option>
+                                                <option value="Manufacturing"{" selected" if table[i]['Sector'] == "Manufacturing" else ""}>Manufacturing</option>
+                                                <option value="Retail"{" selected" if table[i]['Sector'] == "Retail" else ""}>Retail</option>
+                                                <option value="Telecommunications"{" selected" if table[i]['Sector'] == "Telecommunications" else ""}>Telecommunications</option>
+                                                <option value="Hospitality"{" selected" if table[i]['Sector'] == "Hospitality" else ""}>Hospitality</option>
+                                                <option value="Energy"{" selected" if table[i]['Sector'] == "Energy" else ""}>Energy</option>
+                                                <option value="Transportation"{" selected" if table[i]['Sector'] == "Transportation" else ""}>Transportation</option>
+                                                <option value="Entertainment"{" selected" if table[i]['Sector'] == "Entertainment" else ""}>Entertainment</option>
+                                                <option value="Agriculture"{" selected" if table[i]['Sector'] == "Agriculture" else ""}>Agriculture</option>
+                                                <option value="Construction"{" selected" if table[i]['Sector'] == "Construction" else ""}>Construction</option>
+                                                <option value="Pharmaceuticals"{" selected" if table[i]['Sector'] == "Pharmaceuticals" else ""}>Pharmaceuticals</option>
+                                                <option value="Automotive"{" selected" if table[i]['Sector'] == "Automotive" else ""}>Automotive</option>
+                                                <option value="Media"{" selected" if table[i]['Sector'] == "Media" else ""}>Media</option>
+                                                <option value="Real Estate"{" selected" if table[i]['Sector'] == "Real Estate" else ""}>Real Estate</option>
+                                                <option value="Aerospace"{" selected" if table[i]['Sector'] == "Aerospace" else ""}>Aerospace</option>
+                                                <option value="Environmental"{" selected" if table[i]['Sector'] == "Environmental" else ""}>Environmental</option>
+                                                <option value="Government"{" selected" if table[i]['Sector'] == "Government" else ""}>Government</option>
+                                                <option value="Other"{" selected" if table[i]['Sector'] == "Other" else ""}>Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="my-2"></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label for="edit_company_employees_{table[i]['Company ID']}">Employees</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <select id="edit_company_employees_{table[i]['Company ID']}">
+                                                <option value="1k-5k"{" selected" if table[i]['Employees'] == "1k-5k" else ""}>1k-5k</option>
+                                                <option value="5k-10k"{" selected" if table[i]['Employees'] == "5k-10k" else ""}>5k-10k</option>
+                                                <option value="10k-50k"{" selected" if table[i]['Employees'] == "10k-50k" else ""}>10k-50k</option>
+                                                <option value="1 Lakh+"{" selected" if table[i]['Employees'] == "1 Lakh+" else ""}>1 Lakh+</option>
+                                                <option value="Other"{" selected" if table[i]['Employees'] == "Other" else ""}>Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="my-2"></div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" onclick="company_change({table[i]['Company ID']})" class="view_button" data-bs-dismiss="modal">Save</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>"""
+                table_html = f"""<table class="table table-responsive">
+                    <tr>
+                        <th>S.No.</th>
+                        <th>Company</th>
+                        <th>State</th>
+                        <th>Sector</th>
+                        <th>Status</th>
+                        <th>Employees</th>
+                        <th>Edit</th>
+                        <th>View</th>
+                    </tr>
+                    {rows_html}
+                </table>"""
+            else:
+                table_html = ""
+            return render_template("view_company_list.html", table_html = table_html, list_name = company_lists_col.find_one({'List ID': int(id)})['Name'], list_id = int(id))
+        except Exception as e:
+            traceback.print_exc()
+            return render_template("error.html", error = e)
+        
+@app.route('/edit-company-list/<id>', methods = ['GET', 'POST'])
+def edit_company_list(id):
+    if 'login_email' not in session or 'login_pwd' not in session:
+        return redirect(url_for("login"))
+    elif session['access_level'] != "admin" and session['access_level'] != "sales":
+        abort(403)
+    else:
+        try:
+            companies_list = list(companies_col.find())
+            list_name = company_lists_col.find_one({'List ID': int(id)})['Name']
+            list_companies = lists_companies_col.distinct('Company ID', {'List ID': int(id)})
+            print(list_companies, int(id), list_name)
+            if len(companies_list) != 0:
+                rows_edit_html = ""
+                for i in range(len(companies_list)):
+                    rows_edit_html += f"""<tr>
+                        <td><input id="edit_list_company_{companies_list[i]['Company ID']}" value={companies_list[i]['Company ID']} type="checkbox"{" checked" if companies_list[i]['Company ID'] in list_companies else ""}></td>
+                        <td>{companies_list[i]['Company']}</td>
+                        <td>{companies_list[i]['State']}</td>
+                        <td>{companies_list[i]['Sector']}</td>
+                        <td>{companies_list[i]['Employees']}</td>
+                        <td>{companies_list[i]['Status']}</td>
+                    </tr>"""
+                table_edit_html = f"""<table class="table table-responsive">
+                    <tr>
+                        <th></th>
+                        <th>Company</th>
+                        <th>State</th>
+                        <th>Sector</th>
+                        <th>Employees</th>
+                        <th>Status</th>
+                    </tr>
+                    {rows_edit_html}
+                </table>"""
+            else:
+                table_edit_html = ""
+            return render_template("edit_company_list.html", list_id = id, list_name = list_name, table_edit_html = table_edit_html)
+        except Exception as e:
+            traceback.print_exc()
+            return render_template("error.html", error = e)
+
+@app.route('/save-edit-company-list', methods = ['POST'])
+def save_edit_company_list():
+    list_id = int(request.form['id'])
+    list_name = request.form['name']
+    list_companies = request.form.getlist("companies[]")
+    if len(list(company_lists_col.find({
+        'Name': list_name,
+        'List ID': {'$ne': list_id}
+    }))) > 0:
+        return "List Already Added"
+    else:
+        try:
+            company_lists_col.update_one({'List ID': list_id}, {"$set": {"Name": list_name}})
+            lists_companies_col.delete_many({'List ID': list_id})
+            for company in list_companies:
+                company_row = companies_col.find_one({'Company ID': int(company)})
+                lists_companies_col.insert_one({
+                    'List ID': list_id,
+                    'Name': list_name,
+                    'Company ID': int(company),
+                    'Company': company_row['Company'],
+                    'State': company_row['State'],
+                    'Sector': company_row['Sector'],
+                    'Employees': company_row['Employees'],
+                    'Status': company_row['Status']
+                })
+            return "List Edited Successfully"
+        except Exception as e:
+            traceback.print_exc()
+            return render_template("error.html", error = e)
