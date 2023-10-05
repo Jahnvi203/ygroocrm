@@ -43,7 +43,7 @@
             const prods = document.querySelectorAll(".add_phone_comm_prods:checked");
             const prod_values = Array.from(prods).map(checkbox => checkbox.value);
             const prods_csvalues = prod_values.join(', ');
-            const outcome = document.getElementById("add_phone_comm_outcome").value;
+            const outcome = document.getElementById("add_phone_comm_outcome");
             const notes = document.getElementById("add_phone_comm_notes");
             if (start_dt.value === "") {
                 alert("Start date & time is empty")
