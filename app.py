@@ -1792,15 +1792,51 @@ def phone_comms():
                     'Start Date & Time': {'$gte': from_dt, '$lte': to_dt},
                     'End Date & Time': {'$gte': from_dt, '$lte': to_dt}
                 }).sort('Start Date & Time'))
-                info1 = len(list(phone_comms_col.find({"Outcome": "Not Interested"})))
-                info2 = len(list(phone_comms_col.find({"Outcome": "Call Back Requested"})))
-                info3 = len(list(phone_comms_col.find({"Outcome": "Maybe in the Future"})))
-                info4 = len(list(phone_comms_col.find({"Outcome": "Agreed to a Meeting"})))
-                info5 = len(list(phone_comms_col.find({"Outcome": "Line Busy"})))
-                info6 = len(list(phone_comms_col.find({"Outcome": "No Response"})))
-                info7 = len(list(phone_comms_col.find({"Outcome": "Will Get in Touch if there is a Need"})))
-                info8 = len(list(phone_comms_col.find({"Outcome": "Not the Right Person"})))
-                info9 = len(list(phone_comms_col.find({"Outcome": "Email Requested"})))
+                info1 = len(list(phone_comms_col.find({
+                    "Outcome": "Not Interested",
+                    'Start Date & Time': {'$gte': from_dt, '$lte': to_dt},
+                    'End Date & Time': {'$gte': from_dt, '$lte': to_dt}
+                })))
+                info2 = len(list(phone_comms_col.find({
+                    "Outcome": "Call Back Requested",
+                    'Start Date & Time': {'$gte': from_dt, '$lte': to_dt},
+                    'End Date & Time': {'$gte': from_dt, '$lte': to_dt}
+                })))
+                info3 = len(list(phone_comms_col.find({
+                    "Outcome": "Maybe in the Future",
+                    'Start Date & Time': {'$gte': from_dt, '$lte': to_dt},
+                    'End Date & Time': {'$gte': from_dt, '$lte': to_dt}
+                })))
+                info4 = len(list(phone_comms_col.find({
+                    "Outcome": "Agreed to a Meeting",
+                    'Start Date & Time': {'$gte': from_dt, '$lte': to_dt},
+                    'End Date & Time': {'$gte': from_dt, '$lte': to_dt}
+                })))
+                info5 = len(list(phone_comms_col.find({
+                    "Outcome": "Line Busy",
+                    'Start Date & Time': {'$gte': from_dt, '$lte': to_dt},
+                    'End Date & Time': {'$gte': from_dt, '$lte': to_dt}
+                })))
+                info6 = len(list(phone_comms_col.find({
+                    "Outcome": "No Response",
+                    'Start Date & Time': {'$gte': from_dt, '$lte': to_dt},
+                    'End Date & Time': {'$gte': from_dt, '$lte': to_dt}
+                })))
+                info7 = len(list(phone_comms_col.find({
+                    "Outcome": "Will Get in Touch if there is a Need",
+                    'Start Date & Time': {'$gte': from_dt, '$lte': to_dt},
+                    'End Date & Time': {'$gte': from_dt, '$lte': to_dt}
+                })))
+                info8 = len(list(phone_comms_col.find({
+                    "Outcome": "Not the Right Person",
+                    'Start Date & Time': {'$gte': from_dt, '$lte': to_dt},
+                    'End Date & Time': {'$gte': from_dt, '$lte': to_dt}
+                })))
+                info9 = len(list(phone_comms_col.find({
+                    "Outcome": "Email Requested",
+                    'Start Date & Time': {'$gte': from_dt, '$lte': to_dt},
+                    'End Date & Time': {'$gte': from_dt, '$lte': to_dt}
+                })))
                 for entry in phone_comms_gotten:
                     entry['Start Date & Time'] = datetime.strptime(entry['Start Date & Time'], '%Y-%m-%dT%H:%M').strftime('%d/%m/%Y: %I:%M %p')
                     entry['End Date & Time'] = datetime.strptime(entry['End Date & Time'], '%Y-%m-%dT%H:%M').strftime('%d/%m/%Y: %I:%M %p')
