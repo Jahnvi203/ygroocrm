@@ -313,8 +313,8 @@ def companies():
                         <th>Company</th>
                         <th>State</th>
                         <th>Sector</th>
-                        <th>Status</th>
                         <th>Employees</th>
+                        <th>Status</th>
                         <th>Edit</th>
                         <th>View</th>
                     </tr>
@@ -2136,8 +2136,8 @@ def view_company_list(id):
                         <th>Company</th>
                         <th>State</th>
                         <th>Sector</th>
-                        <th>Status</th>
                         <th>Employees</th>
+                        <th>Status</th>
                         <th>Edit</th>
                         <th>View</th>
                     </tr>
